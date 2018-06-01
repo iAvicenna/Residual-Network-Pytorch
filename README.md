@@ -8,8 +8,8 @@ This implementation gets a CIFAR10 test accuracy of %91-92 percent
 when 18 layers are used (in the paper they achieve %93 percent, this might
 be because they prep the dataset with whitening. Different annealing schemes or 
 changing the order of the batchnorm and relu does not make any significant 
-changes. SGD with a decreasing learning rate seems to perform the
-best among all optimizers. Applying random rotations, flips and ctops to the training set
+changes. SGD with a decreasing learning rate and weight decay=0.0001 seems to perform the
+best among all optimizers. Applying random rotations, flips and crops to the training set
 at the beginning of each cycle to boost the variety in training set seems to improve
 the accuracy by about %1-2 percent.
 
@@ -37,23 +37,18 @@ Implementation of ResNet18 with time step learning rate. Details:
 
 Best test accuracy: 0.90660, training accuracy: 0.96980 (cost:0.09425)
 
-|  Class        |  Score                                      |
-| ------------- | ------------------------------------------- |
-| Class: plane  | Precision:0.89, Recall: 0.92, F1 norm: 0.90 |
-| Class: car    | Precision:0.96, Recall: 0.95, F1 norm: 0.96 |
-| Class: bird   | Precision:0.88, Recall: 0.85, F1 norm: 0.87 | 
-| Class: cat    | Precision:0.81, Recall: 0.82, F1 norm: 0.81 |
-| Class: deer   | Precision:0.90, Recall: 0.91, F1 norm: 0.90 |
-| Class: dog    | Precision:0.85, Recall: 0.86, F1 norm: 0.85 |
-| Class: frog   | Precision:0.94, Recall: 0.92, F1 norm: 0.93 |
-| Class: horse  | Precision:0.95, Recall: 0.93, F1 norm: 0.94 |
-| Class: ship   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
-| Class: truck  | Precision:0.93, Recall: 0.94, F1 norm: 0.94 |
-
-| First Header  | Second Header |
-| ------------- | ------------- |
-| Content Cell  | Content Cell  |
-| Content Cell  | Content Cell  |
+|  Class  |  Score                                      |
+| ------- | ------------------------------------------- |
+|  plane  | Precision:0.89, Recall: 0.92, F1 norm: 0.90 |
+|  car    | Precision:0.96, Recall: 0.95, F1 norm: 0.96 |
+|  bird   | Precision:0.88, Recall: 0.85, F1 norm: 0.87 | 
+|  cat    | Precision:0.81, Recall: 0.82, F1 norm: 0.81 |
+|  deer   | Precision:0.90, Recall: 0.91, F1 norm: 0.90 |
+|  dog    | Precision:0.85, Recall: 0.86, F1 norm: 0.85 |
+|  frog   | Precision:0.94, Recall: 0.92, F1 norm: 0.93 |
+|  horse  | Precision:0.95, Recall: 0.93, F1 norm: 0.94 |
+|  ship   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
+|  truck  | Precision:0.93, Recall: 0.94, F1 norm: 0.94 |
 
 
 
@@ -63,16 +58,41 @@ Implementation of ResNet18 with exponentially decreasing learning rate. Details:
 
 Best test accuracy: 0.91490, training accuracy: 0.98218 (cost:0.06073)
 
-Class: plane, Precision:0.93, Recall: 0.90, F1 norm: 0.91  
-Class: car  , Precision:0.95, Recall: 0.96, F1 norm: 0.96  
-Class: bird , Precision:0.89, Recall: 0.87, F1 norm: 0.88  
-Class: cat  , Precision:0.83, Recall: 0.82, F1 norm: 0.82  
-Class: deer , Precision:0.90, Recall: 0.93, F1 norm: 0.91  
-Class: dog  , Precision:0.87, Recall: 0.89, F1 norm: 0.88  
-Class: frog , Precision:0.94, Recall: 0.94, F1 norm: 0.94  
-Class: horse, Precision:0.96, Recall: 0.92, F1 norm: 0.94  
-Class: ship , Precision:0.92, Recall: 0.96, F1 norm: 0.94  
-Class: truck, Precision:0.94, Recall: 0.94, F1 norm: 0.94  
+|  Class  |  Score                                      |
+| ------- | ------------------------------------------- |
+|  plane  | Precision:0.93, Recall: 0.90, F1 norm: 0.91 |
+|  car    | Precision:0.95, Recall: 0.96, F1 norm: 0.96 |
+|  bird   | Precision:0.89, Recall: 0.87, F1 norm: 0.88 | 
+|  cat    | Precision:0.83, Recall: 0.82, F1 norm: 0.82 |
+|  deer   | Precision:0.90, Recall: 0.93, F1 norm: 0.91 |
+|  dog    | Precision:0.87, Recall: 0.89, F1 norm: 0.88 |
+|  frog   | Precision:0.94, Recall: 0.94, F1 norm: 0.94 |
+|  horse  | Precision:0.96, Recall: 0.92, F1 norm: 0.94 |
+|  ship   | Precision:0.92, Recall: 0.96, F1 norm: 0.94 |
+|  truck  | Precision:0.94, Recall: 0.94, F1 norm: 0.94 |
+
+
+![](images/Graph3.png)
+
+Implementation of ResNet with 62 layers with exponentially decreasing learning rate. Details:
+
+
+Best test accuracy: 0.91590, training accuracy: 0.99350 (cost:0.01992)
+
+|  Class  |  Score                                      |
+| ------- | ------------------------------------------- |
+|  plane  | Precision:0.91, Recall: 0.93, F1 norm: 0.92 |
+|  car    | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
+|  bird   | Precision:0.89, Recall: 0.88, F1 norm: 0.89 | 
+|  cat    | Precision:0.82, Recall: 0.82, F1 norm: 0.82 |
+|  deer   | Precision:0.91, Recall: 0.93, F1 norm: 0.92 |
+|  dog    | Precision:0.86, Recall: 0.86, F1 norm: 0.86 |
+|  frog   | Precision:0.95, Recall: 0.93, F1 norm: 0.94 |
+|  horse  | Precision:0.94, Recall: 0.93, F1 norm: 0.94 |
+|  ship   | Precision:0.96, Recall: 0.94, F1 norm: 0.95 |
+|  truck  | Precision:0.93, Recall: 0.94, F1 norm: 0.94 |
+
+
 
 Note that a high precision, low recall for an object X means that the network is very cautious 
 about this object. So for many objects which are X, the network might say "this is not X", but if it says
