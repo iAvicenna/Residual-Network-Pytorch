@@ -1,4 +1,4 @@
-# A PyTorch Implementation of DenseNet
+# A PyTorch (0.3.0) Implementation of DenseNet
 
 This is a [PyTorch](http://pytorch.org/) implementation of the
 Residual Network architecture with basic blocks as described
@@ -75,6 +75,7 @@ can sort this out (to be implemented in future).
 
 Author:
 Sina Tureli
+
 Yet Another Implementation of Residual Networks
 
 
