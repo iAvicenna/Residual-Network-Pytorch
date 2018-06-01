@@ -49,6 +49,7 @@ Class: ship , Precision:0.95, Recall: 0.95, F1 norm: 0.95
 Class: truck, Precision:0.93, Recall: 0.94, F1 norm: 0.94  
 
 ![](images/Graph2.png)
+
 Implementation of ResNet18 with exponentially decreasing learning rate. Details:
 
 Best test accuracy: 0.91490, training accuracy: 0.98218 (cost:0.06073)
