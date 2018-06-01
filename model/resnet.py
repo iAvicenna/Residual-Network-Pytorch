@@ -18,7 +18,7 @@
 # to .item()                                                                   #
 ################################################################################
 
-
+import pickle
 import torch
 from torch.autograd import Variable
 import torchvision
@@ -324,10 +324,13 @@ def train(network,state,isCuda,data):
               
         
 
-        for param_group in network['optimizer'].param_groups:
-           param_group['lr'] = np.exp(-e*0.02)*state['learning rate']
-           param_group['momentum']=state['momentum']
-           print('Learning rate %.5f'% param_group['lr'])       
+        if(e in state['schedule']):
+            print('Changing learning rate from %.5f to'%state['learning rate'])
+            index=state['schedule'].index(e)
+            for param_group in network['optimizer'].param_groups:
+                param_group['lr']*=state['gamma'][index]
+                state['learning rate']*=state['gamma'][index]
+                print('%.5f'% param_group['lr'])     
 
           
         #put network in train mode
@@ -376,35 +379,38 @@ def train(network,state,isCuda,data):
         state['recall'] = np.vstack((state['recall'],tempC))
         state['F1 norm'] = np.vstack((state['F1 norm'],tempD))
         
+        #compute best test accuracy so far
         if(state['test accuracy'][-1]>state['best test accuracy']):
             state['best test accuracy']=state['test accuracy'][-1]
             torch.save(network['model'].state_dict(), 'mynet_trained')
             
 
+        #compute average test accuracy over the last 10 cycles    
         len1 = len(state['test accuracy'])   
         if(len1>9):          
             state['average test accuracy'].append(sum(state['test accuracy'][len1-10:len1])/10)
                                                   
-                                                  
+        #plot results                                           
         if(e%3==2):
             len1=len(state['test accuracy'])
             len2=len(state['training accuracy'])  
             len3=len(state['average test accuracy'])
+            plt.xlabel("Cycles")
+            plt.ylabel("Accuracy")
+            plt.title("Test and Train Accuracy vs Cycles")
+            plt.legend()
+            axes = plt.gca()
+            axes.set_xlim([0,state['cycles']])
+            axes.set_ylim([0,1])
             
             plt.plot(range(0,len1), state['test accuracy'],'g',label="test accuracy")
             plt.plot(range(1,len2+1), state['training accuracy'], 'b', label="training accuracy")
             if(e>9):
                 plt.plot(range(10,len3+10), state['average test accuracy'], 'r--', label="average test accuracy")
-            plt.plot()
-
-            plt.xlabel("Cycles")
-            plt.ylabel("Accuracy")
-            plt.title("Test and Train Accuracy vs Cycles")
-            plt.legend()
+            
+            
             plt.show()
-            axes = plt.gca()
-            axes.set_xlim([0,state['cycles']])
-            axes.set_ylim([0,1])
+            
 
             if(e>9):
                 file_output.write('\tBest test accuracy: %.5f, current test accuracy: %.5f, average test accuracy %.5f, training accuracy: %.5f (cost:%.5f)' %(state['best test accuracy'] ,state['test accuracy'][-1],state['average test accuracy'][-1],state['training accuracy'][-1],average_cost))       
@@ -448,11 +454,12 @@ if __name__ == '__main__':
     state['learning rate']=0.3 #initial learning rate
     state['momentum']=0.95  #momentum variable for the gradient descent
     state['weight decay']=0.0001  #weight decay rate
-    state['cycles'] = 300 #number of cycles that the training runs over the database
+    state['cycles'] = 350 #number of cycles that the training runs over the database
     state['gamma']=0.2 #the multplicative factor used to decrease learning rate as lr -> gamma*lr
-    state['schedule']=[60, 120, 150, 200, 250] #at each cycle in this list lr -> gamma*lr
-    state['number of blocks']=[3, 2, 1, 1] #number of extra blocks in each stage (on top of the transition block)
-    state['width']= 16 #width of the initial block
+    state['schedule']=[60, 100, 150, 200, 250, 300] #at each cycle in this list lr -> gamma*lr
+    state['number of blocks']=[5, 5, 5, 5] #number of extra blocks in each stage (on top of the transition block)
+    state['width']= 32 #width of the initial block
+    state['gamma']=[0.5, 0.20, 0.5, 0.20, 0.5, 0.20]
     
     state['training accuracy']=[] #list of training accuracies over time
     state['test accuracy']=[] #accuracy of the model over the test set
@@ -464,7 +471,6 @@ if __name__ == '__main__':
     state['F1 norm']= []  #F1 norm for each category which is 2*precision*recall/(precision+recall)
     
 
-    
     #initialize network variables
     if( isCuda==1):
         network['model']= ResNet(state['width'],state['number of blocks']).cuda()
@@ -474,7 +480,7 @@ if __name__ == '__main__':
     #print(network['model'])    
     
     network['cost criterion']=  torch.nn.CrossEntropyLoss() #cost function
-    network['optimizer'] =  torch.optim.SGD(network['model'].parameters(), lr=state['learning rate'], momentum=state['momentum'],weight_decay=state['weight decay']) #optimizer
+    network['optimizer'] =  torch.optim.SGD(network['model'].parameters(), lr=state['learning rate'], momentum=state['momentum'],weight_decay=state['weight decay'],nesterov=True) #optimizer
     
     if(state['dataname']=='CIFAR10'):        
         network['classes'] = ('plane', 'car  ', 'bird ', 'cat  ', 'deer ', 'dog  ', 'frog ', 'horse', 'ship ', 'truck') #classes in CIFAR10
