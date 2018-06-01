@@ -34,7 +34,9 @@ change .sum() to .sum().item() and .data[0] to .item()). Random rotations and fl
 ![](images/Graph1.png)
 
 Implementation of ResNet18 with time step learning rate. Details:
+
 Best test accuracy: 0.90660, training accuracy: 0.96980 (cost:0.09425)
+
 Class: plane, Precision:0.89, Recall: 0.92, F1 norm: 0.90  
 Class: car  , Precision:0.96, Recall: 0.95, F1 norm: 0.96  
 Class: bird , Precision:0.88, Recall: 0.85, F1 norm: 0.87  
@@ -48,7 +50,9 @@ Class: truck, Precision:0.93, Recall: 0.94, F1 norm: 0.94
 
 ![](images/Graph2.png)
 Implementation of ResNet18 with exponentially decreasing learning rate. Details:
+
 Best test accuracy: 0.91490, training accuracy: 0.98218 (cost:0.06073)
+
 Class: plane, Precision:0.93, Recall: 0.90, F1 norm: 0.91  
 Class: car  , Precision:0.95, Recall: 0.96, F1 norm: 0.96  
 Class: bird , Precision:0.89, Recall: 0.87, F1 norm: 0.88  
