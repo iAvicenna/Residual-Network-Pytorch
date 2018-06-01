@@ -37,16 +37,19 @@ Implementation of ResNet18 with time step learning rate. Details:
 
 Best test accuracy: 0.90660, training accuracy: 0.96980 (cost:0.09425)
 
-Class: plane, Precision:0.89, Recall: 0.92, F1 norm: 0.90  
-Class: car  , Precision:0.96, Recall: 0.95, F1 norm: 0.96  
-Class: bird , Precision:0.88, Recall: 0.85, F1 norm: 0.87  
-Class: cat  , Precision:0.81, Recall: 0.82, F1 norm: 0.81  
-Class: deer , Precision:0.90, Recall: 0.91, F1 norm: 0.90  
-Class: dog  , Precision:0.85, Recall: 0.86, F1 norm: 0.85  
-Class: frog , Precision:0.94, Recall: 0.92, F1 norm: 0.93  
-Class: horse, Precision:0.95, Recall: 0.93, F1 norm: 0.94  
-Class: ship , Precision:0.95, Recall: 0.95, F1 norm: 0.95  
-Class: truck, Precision:0.93, Recall: 0.94, F1 norm: 0.94  
+| ------------- | ------------------------------------------- |
+| Class: plane  | Precision:0.89, Recall: 0.92, F1 norm: 0.90 |
+| Class: car    | Precision:0.96, Recall: 0.95, F1 norm: 0.96 |
+| Class: bird   | Precision:0.88, Recall: 0.85, F1 norm: 0.87 | 
+| Class: cat    | Precision:0.81, Recall: 0.82, F1 norm: 0.81 |
+| Class: deer   | Precision:0.90, Recall: 0.91, F1 norm: 0.90 |
+| Class: dog    | Precision:0.85, Recall: 0.86, F1 norm: 0.85 |
+| Class: frog   | Precision:0.94, Recall: 0.92, F1 norm: 0.93 |
+| Class: horse  | Precision:0.95, Recall: 0.93, F1 norm: 0.94 |
+| Class: ship   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
+| Class: truck  | Precision:0.93, Recall: 0.94, F1 norm: 0.94 |
+
+
 
 ![](images/Graph2.png)
 
