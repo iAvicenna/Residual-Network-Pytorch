@@ -13,7 +13,6 @@ best among all optimizers. Applying random rotations, flips and crops to the tra
 at the beginning of each cycle to boost the variety in training set seems to improve
 the accuracy by about %1-2 percent.
 
-
 # Architectural details
 
 The network contains 4 stages of residual blocks. The number of residual 
@@ -26,14 +25,16 @@ are used as the "identity" mappings.
 
 The code has been implemented for pytorch 0.3. So if you want to run it in 
 pytorch 0.4 you need to change the way some scalars are handled (in particular
-change .sum() to .sum().item() and .data[0] to .item()). Random rotations and flips
+change .sum() to .sum().item() and .data[0] to .item()). 
 
 
-# Graphs of accuracy
+# Results for various settings
+
+## Implementation of ResNet18 with time step learning rate
+
 
 ![](images/Graph1.png)
 
-Implementation of ResNet18 with time step learning rate. Details:
 
 Best test accuracy: 0.90660, training accuracy: 0.96980 (cost:0.09425)
 
@@ -50,11 +51,10 @@ Best test accuracy: 0.90660, training accuracy: 0.96980 (cost:0.09425)
 |  ship   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
 |  truck  | Precision:0.93, Recall: 0.94, F1 norm: 0.94 |
 
-
+## Implementation of ResNet18 with exponentially decreasing learning rate
 
 ![](images/Graph2.png)
 
-Implementation of ResNet18 with exponentially decreasing learning rate. Details:
 
 Best test accuracy: 0.91490, training accuracy: 0.98218 (cost:0.06073)
 
@@ -72,10 +72,10 @@ Best test accuracy: 0.91490, training accuracy: 0.98218 (cost:0.06073)
 |  truck  | Precision:0.94, Recall: 0.94, F1 norm: 0.94 |
 
 
+
+## Implementation of ResNet with 62 layers with exponentially decreasing learning rate
+
 ![](images/Graph3.png)
-
-Implementation of ResNet with 62 layers with exponentially decreasing learning rate. Details:
-
 
 Best test accuracy: 0.91590, training accuracy: 0.99350 (cost:0.01992)
 
@@ -93,7 +93,7 @@ Best test accuracy: 0.91590, training accuracy: 0.99350 (cost:0.01992)
 |  truck  | Precision:0.93, Recall: 0.94, F1 norm: 0.94 |
 
 
-
+## Discussion
 Note that a high precision, low recall for an object X means that the network is very cautious 
 about this object. So for many objects which are X, the network might say "this is not X", but if it says
 it is "X" then it is very likely to be correct. So it is true guesses are very precise but can not 
@@ -107,9 +107,12 @@ In this case we see that birds, cats and dogs have both lower recall and precisi
 This likely means that the program confuses birds cats and dogs among each other. A full confusion matrix
 can sort this out (to be implemented in future).
 
-Author:
-Sina Tureli
+# Requirements
 
+Pytorch 0.3 and internet connection to download the datasets.
+
+# Author
+Sina Tureli
 Yet Another Implementation of Residual Networks
 
 
