@@ -30,7 +30,7 @@ change .sum() to .sum().item() and .data[0] to .item()).
 
 # Results for various settings
 
-## Implementation of ResNet18 with time step learning rate
+### Implementation of ResNet18 with time step learning rate
 
 
 ![](images/Graph1.png)
@@ -51,7 +51,7 @@ Best test accuracy: 0.90660, training accuracy: 0.96980 (cost:0.09425)
 |  ship   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
 |  truck  | Precision:0.93, Recall: 0.94, F1 norm: 0.94 |
 
-## Implementation of ResNet18 with exponentially decreasing learning rate
+### Implementation of ResNet18 with exponentially decreasing learning rate
 
 ![](images/Graph2.png)
 
@@ -73,7 +73,7 @@ Best test accuracy: 0.91490, training accuracy: 0.98218 (cost:0.06073)
 
 
 
-## Implementation of ResNet with 62 layers with exponentially decreasing learning rate
+### Implementation of ResNet with 62 layers with exponentially decreasing learning rate
 
 ![](images/Graph3.png)
 
@@ -93,7 +93,7 @@ Best test accuracy: 0.91590, training accuracy: 0.99350 (cost:0.01992)
 |  truck  | Precision:0.93, Recall: 0.94, F1 norm: 0.94 |
 
 
-## Discussion
+### Discussion
 Note that a high precision, low recall for an object X means that the network is very cautious 
 about this object. So for many objects which are X, the network might say "this is not X", but if it says
 it is "X" then it is very likely to be correct. So it is true guesses are very precise but can not 
