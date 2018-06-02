@@ -12,7 +12,8 @@
 #                                                                              #
 #Notes:                                                                        #
 #1- Accuracy, recall, precision, F1 norm for each class are printed.           #
-#2- A scheduler function is implemented to change the learning rate            #
+#2- A manual scheduler function is implemented to change the learning rate.    #
+#   Exponentially decreasing or stepwise options are available.                #
 #3- This code has been tested on pytorch 0.3. In 0.4 the way the scalars are   # 
 # handled is changed so you need to change .sum() to .sum().item() and .data[0]#
 # to .item()                                                                   #
@@ -52,8 +53,7 @@ def getData(batch_size,dataname):
         #random transformation to boost data variety at each epoch
         
         transform_train = transforms.Compose(
-        [     
-              transforms.RandomRotation(10),
+        [                  
               transforms.RandomHorizontalFlip(),
               transforms.RandomCrop(32, padding=4),
               transforms.ToTensor(),
@@ -97,6 +97,30 @@ def getData(batch_size,dataname):
 
     
     return (training_set,test_set,training_loader,test_loader)
+    
+
+def schedule (e,state,optimizer):
+  
+    if(state['scheduler']=='step'):  
+
+        if(e in state['schedule']):
+            print('New learning rate: ')
+              
+            index=state['schedule'].index(e)
+            for param_group in network['optimizer'].param_groups:
+                param_group['lr']*=state['gamma'][index]
+                state['learning rate']*=state['gamma'][index]
+                print('%.5f'% param_group['lr'])     
+
+    if(state['scheduler']=='exponential'):
+              
+     
+            print('New learning rate: ')
+        
+            for param_group in network['optimizer'].param_groups:
+                param_group['lr']=np.exp(-state['decay factor']*e)*state['learning rate']
+            
+                print('%.5f'% param_group['lr'])  
     
     
 #this function is used to test the accuracy of the model     
@@ -324,13 +348,9 @@ def train(network,state,isCuda,data):
               
         
 
-        if(e in state['schedule']):
-            print('Changing learning rate from %.5f to'%state['learning rate'])
-            index=state['schedule'].index(e)
-            for param_group in network['optimizer'].param_groups:
-                param_group['lr']*=state['gamma'][index]
-                state['learning rate']*=state['gamma'][index]
-                print('%.5f'% param_group['lr'])     
+        schedule (e,state,network['optimizer'])
+      
+        
 
           
         #put network in train mode
@@ -447,19 +467,24 @@ if __name__ == '__main__':
     
     #get data
     state['dataname']='CIFAR10'
-    state['batch size']=256
+    state['batch size']=512
     (data['training set'],data['test set'],data['training loader'],data['test loader']) = getData(state['batch size'],state['dataname'])  
     
     #set parameters
-    state['learning rate']=0.3 #initial learning rate
+    state['learning rate']=0.1 #initial learning rate
     state['momentum']=0.95  #momentum variable for the gradient descent
-    state['weight decay']=0.0001  #weight decay rate
+    state['weight decay']=0.00001  #weight decay rate
     state['cycles'] = 350 #number of cycles that the training runs over the database
-    state['gamma']=0.2 #the multplicative factor used to decrease learning rate as lr -> gamma*lr
-    state['schedule']=[60, 100, 150, 200, 250, 300] #at each cycle in this list lr -> gamma*lr
-    state['number of blocks']=[5, 5, 5, 5] #number of extra blocks in each stage (on top of the transition block)
+    state['gamma']=0.2 #the multplicative factor used to decrease learning rate as lr -> gamma*lr    
+    state['number of blocks']=[10, 10, 10, 10] #number of extra blocks in each stage (on top of the transition block)
     state['width']= 32 #width of the initial block
-    state['gamma']=[0.5, 0.20, 0.5, 0.20, 0.5, 0.20]
+    state['scheduler'] = 'step'  #step or exponential scheduler is available
+    
+    if(state['scheduler']=='step'):
+        state['schedule']=[60, 100, 150, 200, 250, 300] #at each cycle in this list lr -> gamma*lr
+        state['gamma']=[0.5, 0.20, 0.5, 0.20, 0.5, 0.20]
+    if(state['scheduler']=='exponential'):    
+        state['decay factor']=0.02
     
     state['training accuracy']=[] #list of training accuracies over time
     state['test accuracy']=[] #accuracy of the model over the test set
@@ -471,6 +496,7 @@ if __name__ == '__main__':
     state['F1 norm']= []  #F1 norm for each category which is 2*precision*recall/(precision+recall)
     
 
+    
     #initialize network variables
     if( isCuda==1):
         network['model']= ResNet(state['width'],state['number of blocks']).cuda()
@@ -492,4 +518,5 @@ if __name__ == '__main__':
 
     
     train(network,state,isCuda,data) #start training
+    !kill -9 -1
     
