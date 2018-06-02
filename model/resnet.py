@@ -15,8 +15,9 @@
 #2- A manual scheduler function is implemented to change the learning rate.    #
 #   Exponentially decreasing or stepwise options are available.                #
 #3- This code has been tested on pytorch 0.3. In 0.4 the way the scalars are   # 
-# handled is changed so you need to change .sum() to .sum().item() and .data[0]#
-# to .item()                                                                   #
+#   handled is changed so you need to change .sum() to .sum().item() and       #
+#   .data[0] to .item(). Also change init.kaiming_normal to                    #
+#   init.kaiming_normal_ and init.constant to init.constant_	               #					
 ################################################################################
 
 import pickle
