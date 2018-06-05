@@ -6,8 +6,9 @@
 #'frog', 'horse', 'ship', 'truck'). The architecture is a residual network     #
 #using basic blocks. Using a single basic block achieves accuracy up to %80    #
 #in several minutes.  Using multiple basic blocks (ResNet-18 architecture)     #
-#achieves up to %90-92 percent accuracy in about 200 cycles. The code has been # 
-#mainly tested in google colaboratory. The original paper for this work is in: # 
+#achieves %92-93 percent accuracy in about 200 cycles. The code has been       # 
+#mainly tested in google colaboratory. Therefore command line arguements are   #
+#not available yet. The original paper for this work is in:                    # 
 #arxiv.org/abs/1512.03385                                                      #
 #                                                                              #
 #Notes:                                                                        #
@@ -15,10 +16,8 @@
 #2- A manual scheduler function is implemented to change the learning rate.    #
 #   Exponentially decreasing or stepwise options are available.                #
 #3- This code has been tested on pytorch 0.3. In 0.4 the way the scalars are   # 
-#   handled is changed so you need to change .sum() to .sum().item(),          #
-#   .data[0] to .item() and c[k] to c[k].item(). Also change                   #
-#   init.kaiming_normal to  init.kaiming_normal_ and                           #
-#   init.constant to init.constant_	                                       #					
+# handled is changed so you need to change .sum() to .sum().item(),  .data[0]  #
+# to .item()                                                                   #
 ################################################################################
 
 import pickle
@@ -34,9 +33,93 @@ import torch.optim as optim
 import torch.nn.init
 
 
+
+#These two functions convert an object from height x width x color
+#dimensions to color x height x width and vice versa. They are used
+#during whitening.
+class HWCtoCHW(object):
+
+    def __call__(self, tensor):
+        return tensor.transpose(0, 1).transpose(1, 2).contiguous()
+      
+class CHWtoHWC(object):  
+
+    def __call__(self, tensor):
+        return tensor.transpose(1, 2).transpose(0, 1).contiguous()      
+
+def computeZCAMAtrix(dataname):
+
+    #This function computes the ZCA matrix for a set of observables X where
+    #rows are the observations and columns are the variables (M x C x W x H matrix)
+    #C is number of color channels and W x H is width and height of each image
+    #It is input is the data set name and output whitening matrix, per channel
+    #mean and std. Everything is calculated after normalizing to [0,1] scale.
+    
+    if(dataname=='CIFAR10'):
+        root = 'cifar10/' 
+       
+    
+        temp= datasets.CIFAR10(root = root,
+                               train = True,
+                               download = True)
+        
+  
+    #normalize the data to [0 1] range
+    #subtract mean and normalize std
+    temp.train_data=temp.train_data/255
+    mean=(temp.train_data.mean(axis=(0,1,2)))
+    std=(temp.train_data.std(axis=(0,1,2))) 
+    temp.train_data=np.multiply(1/std,np.add(temp.train_data,-mean))
+    
+
+    
+    
+    #reshape data from M x C x W x H to M x N where N=C x W x H 
+    X =  temp.train_data
+    
+    X = X.reshape(-1, 3072)
+    
+    # compute the covariance 
+    cov = np.dot(np.transpose(X,(1,0)),X)   # cov is (N, N)
+    
+    # singular value decomposition
+    U,S,V = np.linalg.svd(cov)     # U is (N, N), S is (N,1) V is (N,N)
+    # build the ZCA matrix which is (N,N)
+    epsilon = 1e-5
+    zca_matrix = np.dot(U, np.dot(np.diag(1.0/np.sqrt(S + epsilon)), U.T))
+  
+
+
+    return (torch.from_numpy(zca_matrix).float(), mean, std)  
+
+
+
+#This function is used to set specific parameters per layer.
+#At this particular code it is used to set weight decays for biases to 0.
+def setParams(network,state):
+  
+  params_dict = dict(network['model'].named_parameters())
+  params=[]
+  weights=[]
+
+  
+  for key, value in params_dict.items():
+
+      if key[-4:] == 'bias':
+          
+          params += [{'params':value,'weight_decay':0.0}]
+          
+      else: 
+          
+          params +=  [{'params': value, 'weight_decay':state['weight decay']}]
+  
+
+  return params
+  
+
 #given batch_size and data set name (currently only CIFAR10)  
 #defined data loaders
-def getData(batch_size,dataname): 
+def getData(batch_size,dataname,Z,mean=0,std=0): 
   
   
     if(batch_size<=0):
@@ -45,27 +128,51 @@ def getData(batch_size,dataname):
     if(dataname=='CIFAR10'):
         root = 'cifar10/'
         
-        #CIFAR10 mean and std when normalized to (0,1) range
-        mean = [0.4913997551666284, 0.48215855929893703, 0.4465309133731618]
-        std = [0.24703225141799082, 0.24348516474564, 0.26158783926049628]
+        if mean.size==0 or std.size==0:
+            mean=(temp.train_data.mean(axis=(0,1,2)))
+            std=(temp.train_data.std(axis=(0,1,2))) 
 
 
-        #this transformation is used to transform the images to [0,1] range
-        #then normalize to 0 mean and 1 std, and then some
-        #random transformation to boost data variety at each epoch
+        #this transformation is used to augment data,normalize it and then whiten
+        #it if state['whitening'] is set to whitening
         
-        transform_train = transforms.Compose(
-        [                  
+        if state['whitening'] != 'None' :
+            transform_train = transforms.Compose(
+            [                  
+              transforms.RandomRotation(10),
               transforms.RandomHorizontalFlip(),
               transforms.RandomCrop(32, padding=4),
               transforms.ToTensor(),
-              transforms.Normalize(mean , std),                          
+              transforms.Normalize(mean , std),  
+              HWCtoCHW(),
+              transforms.LinearTransformation(Z),   
+              CHWtoHWC(),                         
               ])
 
         #for test set we do not apply the random transformations
-        transform_test = transforms.Compose(
-        [     transforms.ToTensor(),
-              transforms.Normalize(mean , std),
+            transform_test = transforms.Compose(
+            [     
+              transforms.ToTensor(),
+              transforms.Normalize(mean , std),  
+              HWCtoCHW(),
+              transforms.LinearTransformation(Z),   
+              CHWtoHWC(),
+              ])
+          
+        else:   
+            transform_train = transforms.Compose(
+            [                  
+              transforms.RandomRotation(10),
+              transforms.RandomHorizontalFlip(),
+              transforms.RandomCrop(32, padding=4),
+              transforms.ToTensor(),
+              transforms.Normalize(mean , std),                         
+              ])
+
+            transform_test = transforms.Compose(
+            [     
+              transforms.ToTensor(),
+              transforms.Normalize(mean , std),  
               ])
         
         
@@ -90,39 +197,53 @@ def getData(batch_size,dataname):
     #one by one. gradients and minimizations are carried out over the whole batch rather
     #than one by one. this decreases variation in computation of gradients.
     training_loader = torch.utils.data.DataLoader(dataset=training_set,
-                                              batch_size=batch_size,
-                                              shuffle=True)
+                                                  batch_size=batch_size,
+                                                  shuffle=True,
+                                                  num_workers=4   
+                                                 )
 
     test_loader = torch.utils.data.DataLoader(dataset=test_set,
-                                            batch_size=batch_size,
-                                            shuffle=False)
+                                              batch_size=batch_size,
+                                              shuffle=False,
+                                              num_workers=4  
+                                             )
 
     
     return (training_set,test_set,training_loader,test_loader)
     
 
+# A scheduler function used to change learning rate based on given conditions.
+# Presently two conditions are available: step-wise and exponential.
 def schedule (e,state,optimizer):
   
-    if(state['scheduler']=='step'):  
+    if state['scheduler']=='step':  
 
-        if(e in state['schedule']):
+        if e in state['schedule']:
             print('New learning rate: ')
               
             index=state['schedule'].index(e)
             for param_group in network['optimizer'].param_groups:
                 param_group['lr']*=state['gamma'][index]
                 state['learning rate']*=state['gamma'][index]
-                print('%.5f'% param_group['lr'])     
-
-    if(state['scheduler']=='exponential'):
+                     
+            print('%.5f'% param_group['lr'])
+                  
+                  
+    elif state['scheduler']=='exponential':
               
      
-            print('New learning rate: ')
+        print('New learning rate: ')
         
-            for param_group in network['optimizer'].param_groups:
-                param_group['lr']=np.exp(-state['decay factor']*e)*state['learning rate']
+        for param_group in network['optimizer'].param_groups:
+            param_group['lr']=np.exp(-state['decay factor']*e)*state['learning rate']
             
-                print('%.5f'% param_group['lr'])  
+        print('%.5f'% param_group['lr'])  
+            
+    else:
+      
+         print('Warning: Unknown scheduler name. Learning rate will not be changed.')
+        
+        
     
     
 #this function is used to test the accuracy of the model     
@@ -155,7 +276,7 @@ def test(network,state,isCuda,data):
         c = (pred == y).squeeze()
         correct += pred.eq(y).sum()
 
-
+        
         for k in range (0,len(c)):
             precision[y[k]]+= c[k]
             recall[y[k]]+=c[k]
@@ -183,50 +304,74 @@ def test(network,state,isCuda,data):
     return (correct/len(data['test set']), precision, recall,F1)
 
 
-#this is the basic block in a residual network. The residual network
+#this are the two types of the basic blocks in a residual network. The residual network
 #in this code is built by concatenating several such blocks together.
 #Basic blocks are of the form x -> D(x) + F(x), where D(x) is x downsampled
 #to the same dimensions as F(x) by a single convolution and F(x) is collection of 
 #successive operations involving several convolutions and batchnorms.
-class BasicResBlock(nn.Module):
-    def __init__(self, input, output, downsample=None,stride=1):
-       super(BasicResBlock, self).__init__()
+class BasicResBlock1(nn.Module):
+    def __init__(self, input, output, downsample, stride=1):
+       super(BasicResBlock1, self).__init__()
        
        self.conv1 = torch.nn.Conv2d(input,output,kernel_size=3,stride=stride,padding=1, bias=False)
        self.batchNorm1 = torch.nn.BatchNorm2d(output)
        self.conv2 = torch.nn.Conv2d(output,output,kernel_size=3,padding=1, stride=1, bias=False)
-       
+       self.downsample=downsample
        
        #applied to the residual to downsample
-       self.downsample = downsample
-       self.batchNorm2 = torch.nn.BatchNorm2d(output) 
-       self.batchNorm3 = torch.nn.BatchNorm2d(output,stride) 
        
+      
+       
+        
+    def forward(self,x1):       
+      
+       residual = self.downsample(x1)
+     
+  
+       x2 = self.conv1(x1)
+       x2 = self.batchNorm1(x2)
+       x2 = F.relu(x2,inplace=True) 
+       x2 = self.conv2(x2)
+       
+      
+       x2+= residual
+
+      
+     
+       return x2
+       
+class BasicResBlock2(nn.Module):
+    def __init__(self, input, output):
+       super(BasicResBlock2, self).__init__()
+       
+       self.conv1 = torch.nn.Conv2d(input,output,kernel_size=3,stride=1,padding=1, bias=False)
+       self.batchNorm1 = torch.nn.BatchNorm2d(input)
+       self.conv2 = torch.nn.Conv2d(output,output,kernel_size=3,padding=1, stride=1, bias=False)   
+       self.batchNorm2 = torch.nn.BatchNorm2d(output) 
+       self.batchNorm3 = torch.nn.BatchNorm2d(output) 
         
     def forward(self,x1):       
        
         
-       #downsample is not None only when x1 needs to be downsampled
-       if(self.downsample is not None): 
-           residual = self.batchNorm3(self.downsample(x1))
-           
-       else:
-           residual = self.batchNorm3(x1)
+       residual = x1
         
        
-        
+       x2 = self.batchNorm1(x1)
+       x2 = F.relu(x2,inplace=True)  
        x2 = self.conv1(x1);
-       x2 = self.batchNorm1(x2)
-       x2 = F.relu(x2,inplace=True) 
+        
+       x2 = self.batchNorm2(x2)
+       x2 = F.relu(x2,inplace=True)  
        x2 = self.conv2(x2)
-       x2 = self.batchNorm2(x2) 
+       
 
        x2+= residual
+        
+       x2 = self.batchNorm3(x2)  
        x2 = F.relu(x2, inplace=True)
+      
      
-       return x2
-       
-       
+       return x2       
   
 
 #Below we define the residual network class.
@@ -234,7 +379,7 @@ class ResNet(nn.Module):
     def __init__(self,width, number_of_blocks):
         super(ResNet, self).__init__()
         
-        #these are the inital laters applied before basic blocks
+        #these are the inital layers applied before basic blocks
         
         self.conv1 = torch.nn.Conv2d(3,width,kernel_size=3,stride=1,padding=1, bias=False)         
         self.batchNorm1 = torch.nn.BatchNorm2d(width) 
@@ -243,39 +388,34 @@ class ResNet(nn.Module):
 
         #resLayer1 is the basic block for the residual network that is formed by
         #concatenating several basic blocks of increasing dimensions together.
-        self.downsample1=torch.nn.Conv2d(width,2*width,kernel_size=1,stride=2,bias=False)  
+        self.downsample1=torch.nn.Conv2d(width,2*width,kernel_size=1,stride=1,bias=False)  
         self.downsample2=torch.nn.Conv2d(2*width,4*width,kernel_size=1,stride=2,bias=False)
         self.downsample3=torch.nn.Conv2d(4*width,8*width,kernel_size=1,stride=2,bias=False)
         
         self.resLayer1=[]
-        self.resLayer1.append(BasicResBlock(width,width))
+        self.resLayer1.append(BasicResBlock1(width,2*width,self.downsample1,1))
         for x in range (0, number_of_blocks[0]) :      #stage1
-            self.resLayer1.append(BasicResBlock(width,width))
+            self.resLayer1.append(BasicResBlock2(2*width,2*width))
         self.resLayer1=nn.Sequential(*self.resLayer1)
         
         self.resLayer2=[]
-        self.resLayer2.append(BasicResBlock(width,2*width,self.downsample1,2)) #stage2
+        self.resLayer2.append(BasicResBlock1(2*width,4*width,self.downsample2,2)) #stage2
         for x in range (0, number_of_blocks[1]) :
-            self.resLayer2.append(BasicResBlock(2*width,2*width,None,1))
+            self.resLayer2.append(BasicResBlock2(4*width,4*width))
         self.resLayer2=nn.Sequential(*self.resLayer2)
         
         self.resLayer3=[]
-        self.resLayer3.append(BasicResBlock(2*width,4*width,self.downsample2,2)) #stage3
+        self.resLayer3.append(BasicResBlock1(4*width,8*width,self.downsample3,2)) #stage3
         for x in range (0, number_of_blocks[2]) :
-            self.resLayer3.append(BasicResBlock(4*width,4*width,None,1))
+            self.resLayer3.append(BasicResBlock2(8*width,8*width))
         self.resLayer3=nn.Sequential(*self.resLayer3)   
+
         
-        self.resLayer4=[]
-        self.resLayer4.append(BasicResBlock(4*width,8*width,self.downsample3,2))  #stage4
-        for x in range (0, number_of_blocks[3]) :
-            self.resLayer4.append(BasicResBlock(8*width,8*width,None,1))
-        self.resLayer4=nn.Sequential(*self.resLayer4)    
-        
-        
-        self.avgpool1 = torch.nn.AvgPool2d(4,stride=1)
+        self.avgpool1 = torch.nn.AvgPool2d(8,stride=1)
         
         #define the final linear classifier layer
         self.full1=nn.Linear(8*width,10)
+        
         #weight initializations
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -303,7 +443,7 @@ class ResNet(nn.Module):
         x = self.resLayer1(x);
         x = self.resLayer2(x);
         x = self.resLayer3(x);
-        x = self.resLayer4(x);
+        #x = self.resLayer4(x);
      
         x = self.avgpool1(x)
      
@@ -380,7 +520,7 @@ def train(network,state,isCuda,data):
             cost.backward() # calculate derivatives wrt parameters
             network['optimizer'].step() #update parameters
             
-            average_cost=average_cost+cost.data[0]; #add the cost to the average cost
+            average_cost=average_cost+cost.data[0] #add the cost to the average cost
             
 
             pred = h.data.max(1)[1]   #calculate correct predictions over this batch
@@ -420,7 +560,7 @@ def train(network,state,isCuda,data):
             plt.xlabel("Cycles")
             plt.ylabel("Accuracy")
             plt.title("Test and Train Accuracy vs Cycles")
-            plt.legend()
+            
             axes = plt.gca()
             axes.set_xlim([0,state['cycles']])
             axes.set_ylim([0,1])
@@ -430,7 +570,7 @@ def train(network,state,isCuda,data):
             if(e>9):
                 plt.plot(range(10,len3+10), state['average test accuracy'], 'r--', label="average test accuracy")
             
-            
+            plt.legend()
             plt.show()
             
 
@@ -466,31 +606,41 @@ if __name__ == '__main__':
     state={} #this is the list that contains state of the system including all the parameters of the program as well as accuracy values and such
     network={} #this is the list that contains the network and functions related to the network (optimizer and cost function)
     data={} #this is the list that contains test and training datasets and dataloaders
+    state['whitening']='ZCA' #set to 'None' if you dont want whitening.
     
-    #get data
+    #compute data whitening matrix and get the loaders etc
     state['dataname']='CIFAR10'
+    Z=[] #whitening matrix
+    mean=np.array([])
+    std=np.array([])
+    
+    if(state['whitening']=='ZCA'):
+        (Z,mean,std)=computeZCAMAtrix(state['dataname'])
+        
     state['batch size']=512
-    (data['training set'],data['test set'],data['training loader'],data['test loader']) = getData(state['batch size'],state['dataname'])  
+    (data['training set'],data['test set'],data['training loader'],data['test loader']) = getData(state['batch size'],state['dataname'],Z,mean,std)  
     
     #set parameters
-    state['learning rate']=0.1 #initial learning rate
-    state['momentum']=0.95  #momentum variable for the gradient descent
-    state['weight decay']=0.00001  #weight decay rate
-    state['cycles'] = 350 #number of cycles that the training runs over the database
-    state['gamma']=0.2 #the multplicative factor used to decrease learning rate as lr -> gamma*lr    
-    state['number of blocks']=[10, 10, 10, 10] #number of extra blocks in each stage (on top of the transition block)
-    state['width']= 32 #width of the initial block
-    state['scheduler'] = 'step'  #step or exponential scheduler is available
+    state['learning rate']=0.3 #initial learning rate
+    state['momentum']=0.9  #momentum variable for the gradient descent
+    state['weight decay']=0.001  #weight decay rate
+    state['cycles'] = 400 #number of cycles that the training runs over the database
+    state['params'] = [] #used to define per layer parameters such as different weight decays or learning parameters for each layer
+
+        
+    state['number of blocks']=[1, 1, 1] #number of extra blocks in each stage of residual network (on top of the transition block)
+    state['width']= 16 #width of the initial convolutional layer
+    state['scheduler'] = 'exponential'  #step or exponential scheduler is available
     
     if(state['scheduler']=='step'):
-        state['schedule']=[60, 100, 150, 200, 250, 300] #at each cycle in this list lr -> gamma*lr
-        state['gamma']=[0.5, 0.20, 0.5, 0.20, 0.5, 0.20]
+        state['schedule']=[60, 120, 160, 220] #at each cycle in this list lr -> gamma*lr
+        state['gamma']=[0.2, 0.2, 0.2, 0.2] #the multplicative factor used to decrease learning rate as lr -> gamma*lr    
     if(state['scheduler']=='exponential'):    
-        state['decay factor']=0.02
+        state['decay factor']=0.01 #decay of learning rate if exponential is chosen
     
     state['training accuracy']=[] #list of training accuracies over time
     state['test accuracy']=[] #accuracy of the model over the test set
-    state['average test accuracy']=[] #Cesaro sum of test accuracy
+    state['average test accuracy']=[] #tail of the Cesaro sum of test accuracy
     state['average training accuracy']=[] #Cesaro sum of training accuracy
     state['best test accuracy']=0 #best test accuracy over all cycles
     state['precision']=[]  #list of true positives/predicted positives for each category over time of the form training accuracy[category][cycle]
@@ -507,11 +657,14 @@ if __name__ == '__main__':
         
     #print(network['model'])    
     
+    state['params']=setParams(network,state)
     network['cost criterion']=  torch.nn.CrossEntropyLoss() #cost function
-    network['optimizer'] =  torch.optim.SGD(network['model'].parameters(), lr=state['learning rate'], momentum=state['momentum'],weight_decay=state['weight decay'],nesterov=True) #optimizer
+    network['optimizer'] =  torch.optim.SGD(state['params'], momentum=state['momentum'], lr=state['learning rate'],nesterov=True) #optimizer
+    #[{'params': resLayer4.bias, 'weight_decay': 0}, {'params': resLayer3.bias, 'weight_decay': 0}, {'params': resLayer2.bias, 'weight_decay': 0},   {'params': resLayer1.bias, 'weight_decay': 0}, {'params': batchNorm1.bias, 'weight_decay': 0},{'params': full1.bias, 'weight_decay': 0} ,{'params': batchNorm1.bias, 'weight_decay': 0} ]
     
     if(state['dataname']=='CIFAR10'):        
         network['classes'] = ('plane', 'car  ', 'bird ', 'cat  ', 'deer ', 'dog  ', 'frog ', 'horse', 'ship ', 'truck') #classes in CIFAR10
+    
     
     
     #calculate the initial success of the model
@@ -520,5 +673,5 @@ if __name__ == '__main__':
 
     
     train(network,state,isCuda,data) #start training
-    !kill -9 -1
+  
     
