@@ -19,7 +19,7 @@ the accuracy by about %1-2 percent. ZCA data whitening and layer-wise properties
 The network contains an initial convolution + 3 stages of residual blocks. 
 The number of residual blocks inside each stage as well as the initial width 
 of the first block can be given as inputs to the network constructer. The width 
-then increases as 3 -> width -> 2*width -> 4*width -> 8*width. Convolution 
+then increases as 3 -> width -> 2* width -> 4* width -> 8* width. Convolution 
 shortcut connections are used as the "identity" mappings. 
 
 # Implementation details
