@@ -76,7 +76,7 @@ Best test accuracy: 0.91590, training accuracy: 0.99350 (cost:0.01992)
 ### Discussion
 Note that a high precision, low recall for an object X means that the network is very cautious 
 about this object. So for many objects which are X, the network might say "this is not X", but if it says
-it is "X" then it is very likely to be correct. So its true guesses are very precise but can not 
+"it is X" then it is very likely to be correct. So its true guesses are very precise but can not 
 recall many X's.
 
 A high recall but low precision for an object X means that the network is very good at finding all the objects
