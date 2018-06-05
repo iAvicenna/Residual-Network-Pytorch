@@ -29,7 +29,7 @@ pytorch 0.4 you need to change the way some scalars are handled (in particular
 change .sum() to .sum().item() and .data[0] to .item()). 
 
 
-# Results for various settings
+# CIFAR-10 Results for various settings 
 
 ### Implementation of ResNet18 with exponentially decreasing learning rate
 
