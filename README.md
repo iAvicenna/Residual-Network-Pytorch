@@ -1,4 +1,4 @@
-# A PyTorch (0.3.0) Implementation of Residual Networks
+# A (Yet Another) PyTorch (0.3.0) Implementation of Residual Networks
 
 This is a [PyTorch](http://pytorch.org/) implementation of the
 Residual Network architecture with basic blocks as described
@@ -31,33 +31,12 @@ change .sum() to .sum().item() and .data[0] to .item()).
 
 # Results for various settings
 
-### Implementation of ResNet18 with time step learning rate
-
-
-![](images/Graph1.png)
-
-
-Best test accuracy: 0.90660, training accuracy: 0.96980 (cost:0.09425)
-
-|  Class  |  Score                                      |
-| ------- | ------------------------------------------- |
-|  plane  | Precision:0.89, Recall: 0.92, F1 norm: 0.90 |
-|  car    | Precision:0.96, Recall: 0.95, F1 norm: 0.96 |
-|  bird   | Precision:0.88, Recall: 0.85, F1 norm: 0.87 | 
-|  cat    | Precision:0.81, Recall: 0.82, F1 norm: 0.81 |
-|  deer   | Precision:0.90, Recall: 0.91, F1 norm: 0.90 |
-|  dog    | Precision:0.85, Recall: 0.86, F1 norm: 0.85 |
-|  frog   | Precision:0.94, Recall: 0.92, F1 norm: 0.93 |
-|  horse  | Precision:0.95, Recall: 0.93, F1 norm: 0.94 |
-|  ship   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
-|  truck  | Precision:0.93, Recall: 0.94, F1 norm: 0.94 |
-
 ### Implementation of ResNet18 with exponentially decreasing learning rate
 
 ![](images/Graph2.png)
 
 
-Best test accuracy: 0.91490, training accuracy: 0.98218 (cost:0.06073)
+Best test accuracy: 0.92490, training accuracy: 0.99632 (cost:0.02136)
 
 |  Class  |  Score                                      |
 | ------- | ------------------------------------------- |
@@ -104,8 +83,8 @@ A high recall but low precision for an object X means that the network is very g
 which are X but it overshoots. So it identifies most of all the objects X as X but it also identifies many other
 which are not X as X as well. So it is not very precise but recalls all the X.
 
-In this case we see that birds, cats and dogs have both lower recall and precision where as others have higher for both.
-This likely means that the program confuses birds cats and dogs among each other. A full confusion matrix
+In this case we see that cats and dogs have both lower recall and precision where as others have higher for both.
+This likely means that the program confuses cats and dogs with each other. A full confusion matrix
 can sort this out (to be implemented in future).
 
 # Requirements
