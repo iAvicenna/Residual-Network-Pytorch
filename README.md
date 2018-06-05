@@ -76,14 +76,14 @@ Best test accuracy: 0.91590, training accuracy: 0.99350 (cost:0.01992)
 ### Discussion
 Note that a high precision, low recall for an object X means that the network is very cautious 
 about this object. So for many objects which are X, the network might say "this is not X", but if it says
-it is "X" then it is very likely to be correct. So it is true guesses are very precise but can not 
-recall most X.
+it is "X" then it is very likely to be correct. So its true guesses are very precise but can not 
+recall many X's.
 
 A high recall but low precision for an object X means that the network is very good at finding all the objects
 which are X but it overshoots. So it identifies most of all the objects X as X but it also identifies many other
 which are not X as X as well. So it is not very precise but recalls all the X.
 
-In this case we see that cats and dogs have both lower recall and precision where as others have higher for both.
+In this case we see that cats and dogs have both lower recall and precision compared to others.
 This likely means that the program confuses cats and dogs with each other. A full confusion matrix
 can sort this out (to be implemented in future).
 
