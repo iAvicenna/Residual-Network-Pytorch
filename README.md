@@ -1,25 +1,26 @@
-# A PyTorch (0.3.0) Implementation of DenseNet
+# A PyTorch (0.3.0) Implementation of Residual Networks
 
 This is a [PyTorch](http://pytorch.org/) implementation of the
 Residual Network architecture with basic blocks as described
 paper [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)
 by Kaiming He, Xiangyu Zhang, Shaoqing Ren and Jian Sun.
-This implementation gets a CIFAR10 test accuracy of %91-92 percent
-when 18 layers are used (in the paper they achieve %93 percent, this might
-be because they prep the dataset with whitening. Different annealing schemes or 
-changing the order of the batchnorm and relu does not make any significant 
-changes. SGD with a decreasing learning rate and weight decay=0.0001 seems to perform the
+This implementation gets a CIFAR10 test accuracy of %92-93 percent
+when 18 layers are used (in the paper they also achieve %93 percent with 18 layers) 
+Different annealing schemes or changing the order of the batchnorm and relu does not 
+seem to make any significant improvements but this requires more testing to make sure. 
+SGD with a decreasing learning rate and weight decay=0.0005 seems to perform the
 best among all optimizers. Applying random rotations, flips and crops to the training set
 at the beginning of each cycle to boost the variety in training set seems to improve
-the accuracy by about %1-2 percent.
+the accuracy by about %1-2 percent. ZCA data whitening and layer-wise properties 
+(setting the weight decays for bias layers to 0) are also implemented.
 
 # Architectural details
 
-The network contains 4 stages of residual blocks. The number of residual 
-blocks inside each stage as well as the initial width of the first block
-can be given as inputs to the network constructer. The width then increases 
-as 3 -> width -> 2*width -> 4*width -> 8*width. Convolution shortcut connections
-are used as the "identity" mappings. 
+The network contains an initial convolution + 3 stages of residual blocks. 
+The number of residual blocks inside each stage as well as the initial width 
+of the first block can be given as inputs to the network constructer. The width 
+then increases as 3 -> width -> 2*width -> 4*width -> 8*width. Convolution 
+shortcut connections are used as the "identity" mappings. 
 
 # Implementation details
 
@@ -60,16 +61,16 @@ Best test accuracy: 0.91490, training accuracy: 0.98218 (cost:0.06073)
 
 |  Class  |  Score                                      |
 | ------- | ------------------------------------------- |
-|  plane  | Precision:0.93, Recall: 0.90, F1 norm: 0.91 |
+|  plane  | Precision:0.92, Recall: 0.93, F1 norm: 0.92 |
 |  car    | Precision:0.95, Recall: 0.96, F1 norm: 0.96 |
-|  bird   | Precision:0.89, Recall: 0.87, F1 norm: 0.88 | 
-|  cat    | Precision:0.83, Recall: 0.82, F1 norm: 0.82 |
-|  deer   | Precision:0.90, Recall: 0.93, F1 norm: 0.91 |
-|  dog    | Precision:0.87, Recall: 0.89, F1 norm: 0.88 |
-|  frog   | Precision:0.94, Recall: 0.94, F1 norm: 0.94 |
-|  horse  | Precision:0.96, Recall: 0.92, F1 norm: 0.94 |
-|  ship   | Precision:0.92, Recall: 0.96, F1 norm: 0.94 |
-|  truck  | Precision:0.94, Recall: 0.94, F1 norm: 0.94 |
+|  bird   | Precision:0.92, Recall: 0.90, F1 norm: 0.91 | 
+|  cat    | Precision:0.83, Recall: 0.85, F1 norm: 0.84 |
+|  deer   | Precision:0.93, Recall: 0.94, F1 norm: 0.93 |
+|  dog    | Precision:0.89, Recall: 0.89, F1 norm: 0.89 |
+|  frog   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
+|  horse  | Precision:0.96, Recall: 0.93, F1 norm: 0.95 |
+|  ship   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
+|  truck  | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
 
 
 
