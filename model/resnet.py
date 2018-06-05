@@ -481,7 +481,7 @@ def train(network,state,isCuda,data):
     tempB=[0,0,0,0,0,0,0,0,0,0];
     tempC=[0,0,0,0,0,0,0,0,0,0];
     tempD=[0,0,0,0,0,0,0,0,0,0];
-    file_output = open('ResNet4.py', 'w')
+    file_output = open('ResNetOutput', 'w')
   
     for e in range(state['cycles']): #cycle through the database many times
 
