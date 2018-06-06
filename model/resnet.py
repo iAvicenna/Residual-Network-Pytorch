@@ -1,6 +1,6 @@
 
 ################################################################################
-#This is a classification code (works on GPU) to classify images from CIFAR10. #
+#This is a classification code (CPU or GPU) to classify images from CIFAR10.   #
 #This database contains images of size 3 x 32 x 32 (50000 training and 10000   #
 #test examples) with 10 classes ('plane', 'car', 'bird', 'cat', 'deer', 'dog', #
 #'frog', 'horse', 'ship', 'truck'). The architecture is a residual network     #
@@ -16,12 +16,13 @@
 #2- A manual scheduler function is implemented to change the learning rate.    #
 #   Exponentially decreasing or stepwise options are available.                #
 #3- This code has been tested on pytorch 0.3. In 0.4 the way the scalars are   # 
-# handled is changed so you need to change .sum() to .sum().item(),  .data[0]  #
-# to .item()                                                                   #
+#   handled is changed so you need to change .sum() to .sum().item(), .data[0] #
+#   to .item()                                                                 #
 ################################################################################
 
 import pickle
 import torch
+import time
 from torch.autograd import Variable
 import torchvision
 from torchvision import transforms, datasets, models
@@ -92,7 +93,28 @@ def computeZCAMAtrix(dataname):
 
     return (torch.from_numpy(zca_matrix).float(), mean, std)  
 
+  
+#This function just gets mean and std of a dataset  
+#normalized to [0,1] range
+def getMeanAndStd(dataname):
 
+   
+    if(dataname=='CIFAR10'):
+        root = 'cifar10/' 
+       
+    
+        temp= datasets.CIFAR10(root = root,
+                               train = True,
+                               download = True)
+        
+  
+    #normalize the data to [0 1] range
+    #subtract mean and normalize std
+    temp.train_data=temp.train_data/255
+    mean=(temp.train_data.mean(axis=(0,1,2)))
+    std=(temp.train_data.std(axis=(0,1,2))) 
+
+    return (mean, std)  
 
 #This function is used to set specific parameters per layer.
 #At this particular code it is used to set weight decays for biases to 0.
@@ -119,7 +141,7 @@ def setParams(network,state):
 
 #given batch_size and data set name (currently only CIFAR10)  
 #defined data loaders
-def getData(batch_size,dataname,Z,mean=0,std=0): 
+def getData(batch_size,dataname,Z,mean,std): 
   
   
     if(batch_size<=0):
@@ -128,18 +150,14 @@ def getData(batch_size,dataname,Z,mean=0,std=0):
     if(dataname=='CIFAR10'):
         root = 'cifar10/'
         
-        if mean.size==0 or std.size==0:
-            mean=(temp.train_data.mean(axis=(0,1,2)))
-            std=(temp.train_data.std(axis=(0,1,2))) 
-
-
+        
         #this transformation is used to augment data,normalize it and then whiten
         #it if state['whitening'] is set to whitening
         
         if state['whitening'] != 'None' :
             transform_train = transforms.Compose(
             [                  
-              transforms.RandomRotation(10),
+              transforms.RandomRotation(5),
               transforms.RandomHorizontalFlip(),
               transforms.RandomCrop(32, padding=4),
               transforms.ToTensor(),
@@ -162,7 +180,7 @@ def getData(batch_size,dataname,Z,mean=0,std=0):
         else:   
             transform_train = transforms.Compose(
             [                  
-              transforms.RandomRotation(10),
+              transforms.RandomRotation(5),
               transforms.RandomHorizontalFlip(),
               transforms.RandomCrop(32, padding=4),
               transforms.ToTensor(),
@@ -188,7 +206,7 @@ def getData(batch_size,dataname,Z,mean=0,std=0):
                                   download = True)
  
     else:
-        printf('Currently only CIFAR10 is allowed, terminating program')
+        print('Currently only CIFAR10 is allowed, terminating program')
         sys.exit()
         
 
@@ -197,15 +215,14 @@ def getData(batch_size,dataname,Z,mean=0,std=0):
     #one by one. gradients and minimizations are carried out over the whole batch rather
     #than one by one. this decreases variation in computation of gradients.
     training_loader = torch.utils.data.DataLoader(dataset=training_set,
-                                                  batch_size=batch_size,
-                                                  shuffle=True,
-                                                  num_workers=4   
-                                                 )
+                                              batch_size=batch_size,
+                                              shuffle=True,
+                                              num_workers=2   )
 
     test_loader = torch.utils.data.DataLoader(dataset=test_set,
-                                              batch_size=batch_size,
-                                              shuffle=False,
-                                              num_workers=4  
+                                            batch_size=batch_size,
+                                            shuffle=False,
+                                            num_workers=2  
                                              )
 
     
@@ -216,9 +233,9 @@ def getData(batch_size,dataname,Z,mean=0,std=0):
 # Presently two conditions are available: step-wise and exponential.
 def schedule (e,state,optimizer):
   
-    if state['scheduler']=='step':  
+    if(state['scheduler']=='step'):  
 
-        if e in state['schedule']:
+        if(e in state['schedule']):
             print('New learning rate: ')
               
             index=state['schedule'].index(e)
@@ -229,7 +246,7 @@ def schedule (e,state,optimizer):
             print('%.5f'% param_group['lr'])
                   
                   
-    elif state['scheduler']=='exponential':
+    elif(state['scheduler']=='exponential'):
               
      
         print('New learning rate: ')
@@ -303,6 +320,33 @@ def test(network,state,isCuda,data):
 
     return (correct/len(data['test set']), precision, recall,F1)
 
+#the following function prints accuracy scores for each class and confuson matrix
+#as table compatible with github
+
+def printTable (state,classes,e):
+  
+    print('| Class  | Score                                       |')
+    print('|--------', end="") 
+    print('|---------------------------------------------|') 
+    
+    for k in range (0, 10):
+        print('| %s  | Precision:%.2f, Recall: %.2f, F1 norm: %.2f | ' %(classes[k], state['precision'][e+1][k], state['recall'][e+1][k], state['F1 norm'][e+1][k]) )
+		   
+      
+    print('\n')  
+    print('| class  ', end="")
+    for k in range (0, 10):
+        print('| %s  '%classes[k], end="")
+    print('|')  
+    for k in range (0, 11):
+        print('|--------', end="") 
+    print('|')    
+
+    for k in range (0, 10):                
+        print('| %s  |'%classes[k], end="")
+        for s in range (0, 10):  
+            print(' %.5f|' %state['confusion matrix'][k,s], end="")
+        print('')         
 
 #this are the two types of the basic blocks in a residual network. The residual network
 #in this code is built by concatenating several such blocks together.
@@ -488,12 +532,12 @@ def train(network,state,isCuda,data):
         print('\n\n Cycle: ',e+1)
  
               
-        
+        t1 = time.clock()
 
         schedule (e,state,network['optimizer'])
       
+      
         
-
           
         #put network in train mode
         network['model'].train()
@@ -526,7 +570,13 @@ def train(network,state,isCuda,data):
             pred = h.data.max(1)[1]   #calculate correct predictions over this batch
             correct += pred.eq(y.data).sum()
             del x, y, h, cost
-
+        
+        
+        t2 = time.clock()
+        print('Training time for cycle %d is %.2f  '%(e,t2-t1), end="")
+        
+        
+        
         state['training accuracy'].append(correct/len(data['training set'])) #training accuracy within one cycle
         pred=0
         correct=0
@@ -535,6 +585,9 @@ def train(network,state,isCuda,data):
        
         #get precision, recall, F1 norm, test accuracy
         (tempA, tempB, tempC, tempD) = test(network,state,isCuda,data)
+    
+    
+        
     
         state['test accuracy'].append(tempA)
         state['precision'] = np.vstack((state['precision'],tempB))
@@ -551,7 +604,9 @@ def train(network,state,isCuda,data):
         len1 = len(state['test accuracy'])   
         if(len1>9):          
             state['average test accuracy'].append(sum(state['test accuracy'][len1-10:len1])/10)
-                                                  
+        t3 = time.clock()  
+        print('Cost calculation time is %.2f'%(t3-t2), end="")   
+          
         #plot results                                           
         if(e%3==2):
             len1=len(state['test accuracy'])
@@ -581,9 +636,10 @@ def train(network,state,isCuda,data):
                 file_output.write('\tBest test accuracy: %.5f, current test accuracy: %.5f, training accuracy: %.5f (cost:%.5f)' %(state['best test accuracy'] ,state['test accuracy'][-1],state['training accuracy'][-1],average_cost))       
                 print('\tBest test accuracy: %.5f, current test accuracy: %.5f, training accuracy: %.5f (cost:%.5f)' %(state['best test accuracy'] ,state['test accuracy'][-1],state['training accuracy'][-1],average_cost)) 
 
-        if(e%50==49):
+        if(e%20==19):
+            printTable(state,network['classes'],e)
+          
             for k in range (0, 10):
-		             print('\t Class: %s, Precision:%.2f, Recall: %.2f, F1 norm: %.2f  ' %(network['classes'][k], state['precision'][e+1][k], state['recall'][e+1][k], state['F1 norm'][e+1][k]) )
 		             file_output.write('\t Class: %s, Precision:%.2f, Recall: %.2f, F1 norm: %.2f  ' %(network['classes'][k], state['precision'][e+1][k], state['recall'][e+1][k], state['F1 norm'][e+1][k]) )
 
             
@@ -606,35 +662,37 @@ if __name__ == '__main__':
     state={} #this is the list that contains state of the system including all the parameters of the program as well as accuracy values and such
     network={} #this is the list that contains the network and functions related to the network (optimizer and cost function)
     data={} #this is the list that contains test and training datasets and dataloaders
-    state['whitening']='ZCA' #set to 'None' if you dont want whitening.
+    state['whitening']='None' #set to 'None' if you dont want whitening.
     
     #compute data whitening matrix and get the loaders etc
     state['dataname']='CIFAR10'
-    Z=[] #whitening matrix
-    mean=np.array([])
-    std=np.array([])
+
     
+    #calculate whitening matrix
+    Z=torch.Tensor()
     if(state['whitening']=='ZCA'):
         (Z,mean,std)=computeZCAMAtrix(state['dataname'])
+    else:
+        (mean,std)=getMeanAndStd(state['dataname'])
         
-    state['batch size']=512
+    state['batch size']=256
     (data['training set'],data['test set'],data['training loader'],data['test loader']) = getData(state['batch size'],state['dataname'],Z,mean,std)  
     
     #set parameters
-    state['learning rate']=0.3 #initial learning rate
+    state['learning rate']=0.1 #initial learning rate
     state['momentum']=0.9  #momentum variable for the gradient descent
-    state['weight decay']=0.001  #weight decay rate
-    state['cycles'] = 400 #number of cycles that the training runs over the database
+    state['weight decay']=0.0005  #weight decay rate
+    state['cycles'] = 300 #number of cycles that the training runs over the database
     state['params'] = [] #used to define per layer parameters such as different weight decays or learning parameters for each layer
 
         
     state['number of blocks']=[1, 1, 1] #number of extra blocks in each stage of residual network (on top of the transition block)
     state['width']= 16 #width of the initial convolutional layer
-    state['scheduler'] = 'exponential'  #step or exponential scheduler is available
+    state['scheduler'] = 'step'  #step or exponential scheduler is available
     
     if(state['scheduler']=='step'):
-        state['schedule']=[60, 120, 160, 220] #at each cycle in this list lr -> gamma*lr
-        state['gamma']=[0.2, 0.2, 0.2, 0.2] #the multplicative factor used to decrease learning rate as lr -> gamma*lr    
+        state['schedule']=[60, 120, 160] #at each cycle in this list lr -> gamma*lr
+        state['gamma']=[0.2, 0.2, 0.2] #the multplicative factor used to decrease learning rate as lr -> gamma*lr    
     if(state['scheduler']=='exponential'):    
         state['decay factor']=0.01 #decay of learning rate if exponential is chosen
     
@@ -646,7 +704,7 @@ if __name__ == '__main__':
     state['precision']=[]  #list of true positives/predicted positives for each category over time of the form training accuracy[category][cycle]
     state['recall']=[]   #list of true positives/actual positives for each category over time of the form recall [category][cycle]
     state['F1 norm']= []  #F1 norm for each category which is 2*precision*recall/(precision+recall)
-    
+    state['confusion matrix']=np.zeros((10,10))
 
     
     #initialize network variables
@@ -673,5 +731,5 @@ if __name__ == '__main__':
 
     
     train(network,state,isCuda,data) #start training
-  
+    !kill -9 -1
     
