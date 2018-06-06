@@ -1,6 +1,6 @@
 
 ################################################################################
-#This is a classification code (CPU or GPU) to classify images from CIFAR10.   #
+#This is a classification code (works on GPU) to classify images from CIFAR10. #
 #This database contains images of size 3 x 32 x 32 (50000 training and 10000   #
 #test examples) with 10 classes ('plane', 'car', 'bird', 'cat', 'deer', 'dog', #
 #'frog', 'horse', 'ship', 'truck'). The architecture is a residual network     #
@@ -16,8 +16,8 @@
 #2- A manual scheduler function is implemented to change the learning rate.    #
 #   Exponentially decreasing or stepwise options are available.                #
 #3- This code has been tested on pytorch 0.3. In 0.4 the way the scalars are   # 
-#   handled is changed so you need to change .sum() to .sum().item(), .data[0] #
-#   to .item()                                                                 #
+# handled is changed so you need to change .sum() to .sum().item(),  .data[0]  #
+# to .item()                                                                   #
 ################################################################################
 
 import pickle
@@ -276,6 +276,7 @@ def test(network,state,isCuda,data):
     predicted_positives=[0,0,0,0,0,0,0,0,0,0]
     actual_positives=[0,0,0,0,0,0,0,0,0,0]
     F1=[0,0,0,0,0,0,0,0,0,0]
+    confusion_matrix=np.zeros((10,10))
     
     for x, y in data['test loader']:
        
@@ -299,9 +300,13 @@ def test(network,state,isCuda,data):
             recall[y[k]]+=c[k]
             predicted_positives[pred[k]]+=1
             actual_positives[y[k]]+=1
+            confusion_matrix[y[k],pred[k]]+=1
             
     
     for k in range (0,10):
+              
+        confusion_matrix[k,:]=confusion_matrix[k,:]/actual_positives[y[k]]
+      
         if(predicted_positives[k]>0):
             precision[k]=precision[k]/predicted_positives[k]
         else: 
@@ -318,7 +323,7 @@ def test(network,state,isCuda,data):
             F1[k]=0
         
 
-    return (correct/len(data['test set']), precision, recall,F1)
+    return (correct/len(data['test set']), precision, recall,F1,confusion_matrix)
 
 #the following function prints accuracy scores for each class and confuson matrix
 #as table compatible with github
@@ -584,7 +589,7 @@ def train(network,state,isCuda,data):
         
        
         #get precision, recall, F1 norm, test accuracy
-        (tempA, tempB, tempC, tempD) = test(network,state,isCuda,data)
+        (tempA, tempB, tempC, tempD, state['confusion matrix']) = test(network,state,isCuda,data)
     
     
         
