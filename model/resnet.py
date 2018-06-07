@@ -60,12 +60,12 @@ import GPUtil as GPU
 #These two functions convert an object from height x width x color
 #dimensions to color x height x width and vice versa. They are used
 #during whitening.
-class HWCtoCHW(object):
+class CHWtoHWC(object):
 
     def __call__(self, tensor):
         return tensor.transpose(0, 1).transpose(1, 2).contiguous()
       
-class CHWtoHWC(object):  
+class HWCtoCHW(object):  
 
     def __call__(self, tensor):
         return tensor.transpose(1, 2).transpose(0, 1).contiguous()      
@@ -73,7 +73,7 @@ class CHWtoHWC(object):
 def computeZCAMAtrix(dataname):
 
     #This function computes the ZCA matrix for a set of observables X where
-    #rows are the observations and columns are the variables (M x C x W x H matrix)
+    #rows are the observations and columns are the variables (M x W x H x C matrix)
     #C is number of color channels and W x H is width and height of each image
     #It is input is the data set name and output whitening matrix, per channel
     #mean and std. Everything is calculated after normalizing to [0,1] scale.
@@ -97,8 +97,10 @@ def computeZCAMAtrix(dataname):
 
     
     
-    #reshape data from M x C x W x H to M x N where N=C x W x H 
+    #reshape data from M x W x H x C to M x N where N=C x W x H 
     X =  temp.train_data
+    
+    print(X.shape)
     
     X = X.reshape(-1, 3072)
     
@@ -114,7 +116,6 @@ def computeZCAMAtrix(dataname):
 
 
     return (torch.from_numpy(zca_matrix).float(), mean, std)  
-
   
 #This function just gets mean and std of a dataset  
 #normalized to [0,1] range
@@ -184,9 +185,9 @@ def getData(batch_size,dataname,Z,mean,std):
               transforms.RandomCrop(32, padding=4),
               transforms.ToTensor(),
               transforms.Normalize(mean , std),  
-              HWCtoCHW(),
+              CHWtoHWC(),
               transforms.LinearTransformation(Z),   
-              CHWtoHWC(),                         
+              HWCtoCHW()
               ])
 
         #for test set we do not apply the random transformations
@@ -194,9 +195,9 @@ def getData(batch_size,dataname,Z,mean,std):
             [     
               transforms.ToTensor(),
               transforms.Normalize(mean , std),  
-              HWCtoCHW(),
-              transforms.LinearTransformation(Z),   
               CHWtoHWC(),
+              transforms.LinearTransformation(Z),   
+              HWCtoCHW()
               ])
           
         else:   
@@ -711,7 +712,7 @@ if __name__ == '__main__':
     network={} #this is the list that contains the network and functions related to the network (optimizer and cost function)
     data={} #this is the list that contains test and training datasets and dataloaders
     
-    state['whitening']='None' #set to 'None' if you dont want whitening.
+    state['whitening']='None' #set to 'None' if you dont want whitening, 'ZCA' if you want ZCA.
     
     #compute data whitening matrix and get the loaders etc
     state['dataname']='CIFAR10'
@@ -779,5 +780,5 @@ if __name__ == '__main__':
 
     ramUsage ()
     train(network,state,isCuda,data) #start training
-   
+    !kill -9 -1
     
