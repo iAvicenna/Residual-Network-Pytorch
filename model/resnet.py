@@ -20,9 +20,23 @@
 # to .item()                                                                   #
 ################################################################################
 
-import pickle
+
+# install some packages which are not available in google colab
+# http://pytorch.org/
+from os import path
+from wheel.pep425tags import get_abbr_impl, get_impl_ver, get_abi_tag
+platform = '{}{}-{}'.format(get_abbr_impl(), get_impl_ver(), get_abi_tag())
+
+accelerator = 'cu80' if path.exists('/opt/bin/nvidia-smi') else 'cpu'
+
+!pip install -q http://download.pytorch.org/whl/{accelerator}/torch-0.3.0.post4-{platform}-linux_x86_64.whl torchvision
+!pip install gputil
+!pip install psutil
+!pip install humanize
+
+
+#torch, numpy and matplot related packages
 import torch
-import time
 from torch.autograd import Variable
 import torchvision
 from torchvision import transforms, datasets, models
@@ -32,6 +46,14 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.init
+
+#other packages
+import pickle
+import time
+import psutil
+import humanize
+import os
+import GPUtil as GPU
 
 
 
@@ -215,19 +237,37 @@ def getData(batch_size,dataname,Z,mean,std):
     #one by one. gradients and minimizations are carried out over the whole batch rather
     #than one by one. this decreases variation in computation of gradients.
     training_loader = torch.utils.data.DataLoader(dataset=training_set,
-                                              batch_size=batch_size,
-                                              shuffle=True,
-                                              num_workers=2   )
+                                                  batch_size=batch_size,
+                                                  shuffle=True,
+                                                  )
 
     test_loader = torch.utils.data.DataLoader(dataset=test_set,
-                                            batch_size=batch_size,
-                                            shuffle=False,
-                                            num_workers=2  
+                                              batch_size=batch_size,
+                                              shuffle=False,
                                              )
 
     
     return (training_set,test_set,training_loader,test_loader)
+
+
     
+#track ram usage in google colab
+def ramUsage ():
+  
+    !ln -sf /opt/bin/nvidia-smi /usr/bin/nvidia-smi
+    
+
+    
+    GPUs = GPU.getGPUs()
+    # XXX: only one GPU on Colab and isn’t guaranteed
+    gpu = GPUs[0]
+    def printm():
+        process = psutil.Process(os.getpid())
+        print("Gen RAM Free: " + humanize.naturalsize( psutil.virtual_memory().available ), " I Proc size: " + humanize.naturalsize( process.memory_info().rss))
+        print("GPU RAM Free: {0:.0f}MB | Used: {1:.0f}MB | Util {2:3.0f}% | Total {3:.0f}MB".format(gpu.memoryFree, gpu.memoryUsed, gpu.memoryUtil*100, gpu.memoryTotal))
+   
+    printm()
+
 
 # A scheduler function used to change learning rate based on given conditions.
 # Presently two conditions are available: step-wise and exponential.
@@ -641,12 +681,15 @@ def train(network,state,isCuda,data):
                 file_output.write('\tBest test accuracy: %.5f, current test accuracy: %.5f, training accuracy: %.5f (cost:%.5f)' %(state['best test accuracy'] ,state['test accuracy'][-1],state['training accuracy'][-1],average_cost))       
                 print('\tBest test accuracy: %.5f, current test accuracy: %.5f, training accuracy: %.5f (cost:%.5f)' %(state['best test accuracy'] ,state['test accuracy'][-1],state['training accuracy'][-1],average_cost)) 
 
+            ramUsage()
+  
         if(e%20==19):
             printTable(state,network['classes'],e)
           
             for k in range (0, 10):
 		             file_output.write('\t Class: %s, Precision:%.2f, Recall: %.2f, F1 norm: %.2f  ' %(network['classes'][k], state['precision'][e+1][k], state['recall'][e+1][k], state['F1 norm'][e+1][k]) )
 
+            
             
         average_cost=0   
             
@@ -667,16 +710,16 @@ if __name__ == '__main__':
     state={} #this is the list that contains state of the system including all the parameters of the program as well as accuracy values and such
     network={} #this is the list that contains the network and functions related to the network (optimizer and cost function)
     data={} #this is the list that contains test and training datasets and dataloaders
+    
     state['whitening']='None' #set to 'None' if you dont want whitening.
     
     #compute data whitening matrix and get the loaders etc
     state['dataname']='CIFAR10'
 
     
-    #calculate whitening matrix
     Z=torch.Tensor()
     if(state['whitening']=='ZCA'):
-        (Z,mean,std)=computeZCAMAtrix(state['dataname'])
+        (Z,mean,std)=computeZCAMAtrix(state['dataname']) #calculate whitening matrix
     else:
         (mean,std)=getMeanAndStd(state['dataname'])
         
@@ -731,10 +774,10 @@ if __name__ == '__main__':
     
     
     #calculate the initial success of the model
-    (temp,state['precision'],state['recall'],state['F1 norm'])=test(network,state,isCuda,data)
+    (temp,state['precision'],state['recall'],state['F1 norm'],state['confusion matrix'])=test(network,state,isCuda,data)
     state['test accuracy'].append(temp)
 
-    
+    ramUsage ()
     train(network,state,isCuda,data) #start training
-    !kill -9 -1
+   
     
