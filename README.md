@@ -34,6 +34,35 @@ change .sum() to .sum().item() and .data[0] to .item()).
 ### Implementation of ResNet18 with step-wise learning rate
 ![](images/step-nozca.png)
 
+Best test accuracy: 0.93210, training accuracy: 0.99820 (cost:0.01380)
+
+| Class  | Score                                       |
+|--------|---------------------------------------------|
+| plane  | Precision:0.93, Recall: 0.93, F1 norm: 0.93 | 
+| car    | Precision:0.96, Recall: 0.96, F1 norm: 0.96 | 
+| bird   | Precision:0.92, Recall: 0.90, F1 norm: 0.91 | 
+| cat    | Precision:0.86, Recall: 0.87, F1 norm: 0.87 | 
+| deer   | Precision:0.92, Recall: 0.95, F1 norm: 0.94 | 
+| dog    | Precision:0.90, Recall: 0.89, F1 norm: 0.90 | 
+| frog   | Precision:0.96, Recall: 0.95, F1 norm: 0.96 | 
+| horse  | Precision:0.96, Recall: 0.95, F1 norm: 0.95 | 
+| ship   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 | 
+| truck  | Precision:0.94, Recall: 0.95, F1 norm: 0.95 | 
+
+
+| class  | plane  | car    | bird   | cat    | deer   | dog    | frog   | horse  | ship   | truck  |
+|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+| plane  | 0.93200| 0.00800| 0.01600| 0.00700| 0.00300| 0.00100| 0.00300| 0.00200| 0.02000| 0.00800|
+| car    | 0.00400| 0.96400| 0.00000| 0.00000| 0.00000| 0.00000| 0.00100| 0.00100| 0.00600| 0.02400|
+| bird   | 0.01800| 0.00000| 0.90300| 0.02200| 0.01900| 0.00900| 0.01500| 0.00800| 0.00400| 0.00200|
+| cat    | 0.00600| 0.00200| 0.01400| 0.86900| 0.01700| 0.05900| 0.01400| 0.00700| 0.00600| 0.00600|
+| deer   | 0.00300| 0.00000| 0.01000| 0.01500| 0.94700| 0.01000| 0.00300| 0.01000| 0.00000| 0.00200|
+| dog    | 0.00400| 0.00100| 0.01100| 0.06200| 0.01900| 0.89200| 0.00100| 0.00800| 0.00000| 0.00200|
+| frog   | 0.00500| 0.00100| 0.01200| 0.01400| 0.00800| 0.00300| 0.95100| 0.00200| 0.00200| 0.00200|
+| horse  | 0.00400| 0.00000| 0.00600| 0.01200| 0.01100| 0.01300| 0.00000| 0.94800| 0.00200| 0.00400|
+| ship   | 0.02200| 0.00400| 0.00600| 0.00300| 0.00000| 0.00200| 0.00100| 0.00100| 0.95500| 0.00600|
+| truck  | 0.00700| 0.02800| 0.00100| 0.00200| 0.00000| 0.00000| 0.00000| 0.00000| 0.01200| 0.95000|
+
 ### Implementation of ResNet18 with exponentially decreasing learning rate
 
 ![](images/Graph2.png)
@@ -85,8 +114,8 @@ which are X but it overshoots. So it identifies most of all the objects X as X b
 which are not X as X as well. So it is not very precise but recalls all the X.
 
 In this case we see that cats and dogs have both lower recall and precision compared to others.
-This likely means that the program confuses cats and dogs with each other. A full confusion matrix
-can sort this out (to be implemented in future).
+This likely means that the program confuses cats and dogs with each other. The confusion matrix for the first case confirms this
+a cat is most likely to be confused with a dog (5 times more compared to other objects) followed by deers and birds and the same is true for the dog as well.
 
 # Requirements
 
