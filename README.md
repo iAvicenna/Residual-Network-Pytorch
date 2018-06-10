@@ -69,8 +69,6 @@ Best test accuracy: 0.94030, training accuracy: 0.99970 (cost:0.00475)
 
 ![](images/step-nozca-32.png)
 
-Cycle:  280
-Training time for cycle 279 is 127.36  Cost calculation time is 12.73
 
 | Class  | Score                                       |
 |--------|---------------------------------------------|
