@@ -31,10 +31,10 @@ The code has been implemented for pytorch 0.4.
 
 # CIFAR-10 Results for various settings 
 
-### Implementation of ResNet18 with step-wise learning rate
-![](images/step-nozca.png)
-
+### Implementation of Usual ResNet18 
 Best test accuracy: 0.93210, training accuracy: 0.99820 (cost:0.01380)
+
+![](images/step-nozca.png)
 
 | Class  | Score                                       |
 |--------|---------------------------------------------|
@@ -65,9 +65,9 @@ Best test accuracy: 0.93210, training accuracy: 0.99820 (cost:0.01380)
 
 ### Implementation of ResNet18 with initial width 32
 
-![](images/step-nozca-32.png)
-
 Best test accuracy: 0.94030, training accuracy: 0.99970 (cost:0.00475)
+
+![](images/step-nozca-32.png)
 
 Cycle:  280
 Training time for cycle 279 is 127.36  Cost calculation time is 12.73
