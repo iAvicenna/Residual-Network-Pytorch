@@ -6,7 +6,8 @@
 #'frog', 'horse', 'ship', 'truck'). The architecture is a residual network     #
 #using basic blocks. Using a single basic block achieves accuracy up to %80    #
 #in several minutes.  Using multiple basic blocks (ResNet-18 architecture)     #
-#achieves %92-93 percent accuracy in about 200 cycles. The code has been       # 
+#achieves %92-93 percent accuracy in about 200 cycles. Increasing the width    #
+#or length also increases the accuracy to about %95. The code has been         # 
 #mainly tested in google colaboratory. Therefore command line arguements are   #
 #not available yet. The original paper for this work is in:                    # 
 #arxiv.org/abs/1512.03385                                                      #
@@ -15,9 +16,8 @@
 #1- Accuracy, recall, precision, F1 norm for each class are printed.           #
 #2- A manual scheduler function is implemented to change the learning rate.    #
 #   Exponentially decreasing or stepwise options are available.                #
-#3- This code has been tested on pytorch 0.3. In 0.4 the way the scalars are   # 
-# handled is changed so you need to change .sum() to .sum().item(),  .data[0]  #
-# to .item()                                                                   #
+#3- This code has been tested on pytorch 0.4 so it might not work on 0.3       #
+#   since scalars are now accepted as 0-dim tensors.                           #
 ################################################################################
 
 
@@ -29,7 +29,8 @@ platform = '{}{}-{}'.format(get_abbr_impl(), get_impl_ver(), get_abi_tag())
 
 accelerator = 'cu80' if path.exists('/opt/bin/nvidia-smi') else 'cpu'
 
-!pip install -q http://download.pytorch.org/whl/{accelerator}/torch-0.3.0.post4-{platform}-linux_x86_64.whl torchvision
+!pip install -q http://download.pytorch.org/whl/{accelerator}/torch-0.4.0-{platform}-linux_x86_64.whl torchvision
+
 !pip install gputil
 !pip install psutil
 !pip install humanize
@@ -60,12 +61,12 @@ import GPUtil as GPU
 #These two functions convert an object from height x width x color
 #dimensions to color x height x width and vice versa. They are used
 #during whitening.
-class CHWtoHWC(object):
+class HWCtoCHW(object):
 
     def __call__(self, tensor):
         return tensor.transpose(0, 1).transpose(1, 2).contiguous()
       
-class HWCtoCHW(object):  
+class CHWtoHWC(object):  
 
     def __call__(self, tensor):
         return tensor.transpose(1, 2).transpose(0, 1).contiguous()      
@@ -73,7 +74,7 @@ class HWCtoCHW(object):
 def computeZCAMAtrix(dataname):
 
     #This function computes the ZCA matrix for a set of observables X where
-    #rows are the observations and columns are the variables (M x W x H x C matrix)
+    #rows are the observations and columns are the variables (M x C x W x H matrix)
     #C is number of color channels and W x H is width and height of each image
     #It is input is the data set name and output whitening matrix, per channel
     #mean and std. Everything is calculated after normalizing to [0,1] scale.
@@ -97,10 +98,8 @@ def computeZCAMAtrix(dataname):
 
     
     
-    #reshape data from M x W x H x C to M x N where N=C x W x H 
+    #reshape data from M x C x W x H to M x N where N=C x W x H 
     X =  temp.train_data
-    
-    print(X.shape)
     
     X = X.reshape(-1, 3072)
     
@@ -116,6 +115,7 @@ def computeZCAMAtrix(dataname):
 
 
     return (torch.from_numpy(zca_matrix).float(), mean, std)  
+
   
 #This function just gets mean and std of a dataset  
 #normalized to [0,1] range
@@ -185,9 +185,9 @@ def getData(batch_size,dataname,Z,mean,std):
               transforms.RandomCrop(32, padding=4),
               transforms.ToTensor(),
               transforms.Normalize(mean , std),  
-              CHWtoHWC(),
+              HWCtoCHW(),
               transforms.LinearTransformation(Z),   
-              HWCtoCHW()
+              CHWtoHWC(),                         
               ])
 
         #for test set we do not apply the random transformations
@@ -195,9 +195,9 @@ def getData(batch_size,dataname,Z,mean,std):
             [     
               transforms.ToTensor(),
               transforms.Normalize(mean , std),  
-              CHWtoHWC(),
+              HWCtoCHW(),
               transforms.LinearTransformation(Z),   
-              HWCtoCHW()
+              CHWtoHWC(),
               ])
           
         else:   
@@ -240,11 +240,13 @@ def getData(batch_size,dataname,Z,mean,std):
     training_loader = torch.utils.data.DataLoader(dataset=training_set,
                                                   batch_size=batch_size,
                                                   shuffle=True,
+                                                  num_workers=2
                                                   )
 
     test_loader = torch.utils.data.DataLoader(dataset=test_set,
                                               batch_size=batch_size,
                                               shuffle=False,
+                                              num_workers=2
                                              )
 
     
@@ -333,12 +335,12 @@ def test(network,state,isCuda,data):
         pred = h.data.max(1)[1]
         
         c = (pred == y).squeeze()
-        correct += pred.eq(y).sum()
+        correct += pred.eq(y).sum().item()
 
         
         for k in range (0,len(c)):
-            precision[y[k]]+= c[k]
-            recall[y[k]]+=c[k]
+            precision[y[k]]+= c[k].item()
+            recall[y[k]]+=c[k].item()
             predicted_positives[pred[k]]+=1
             actual_positives[y[k]]+=1
             confusion_matrix[y[k],pred[k]]+=1
@@ -509,15 +511,15 @@ class ResNet(nn.Module):
         #weight initializations
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                torch.nn.init.kaiming_normal(m.weight, mode='fan_out')
+                torch.nn.init.kaiming_normal_(m.weight, mode='fan_out',nonlinearity='relu')
                 
             elif isinstance(m, nn.BatchNorm2d):
-                torch.nn.init.constant(m.weight, 1)
-                torch.nn.init.constant(m.bias, 0)
+                torch.nn.init.constant_(m.weight, 1)
+                torch.nn.init.constant_(m.bias, 0)
 
             elif isinstance(m, nn.Linear):   
-                torch.nn.init.kaiming_normal(m.weight, mode='fan_out')
-                torch.nn.init.constant(m.bias, 0)
+                torch.nn.init.kaiming_normal_(m.weight, mode='fan_out',nonlinearity='relu')
+                torch.nn.init.constant_(m.bias, 0)
         
     #define the forward run for the input data x    
     def forward(self, x):
@@ -593,11 +595,9 @@ def train(network,state,isCuda,data):
         for i, (x, y) in enumerate(data['training loader'] ,0):
         
 
-         
-         
             #here x,y will store data from the training set in batches 
             if(isCuda==1):
-                x, y = Variable(x.cuda()), Variable(y.cuda())
+                x, y = Variable(x.cuda()), Variable(y.cuda(async=True))
             if(isCuda==0):
                 x, y = Variable(x), Variable(y)
                 
@@ -610,11 +610,11 @@ def train(network,state,isCuda,data):
             cost.backward() # calculate derivatives wrt parameters
             network['optimizer'].step() #update parameters
             
-            average_cost=average_cost+cost.data[0] #add the cost to the average cost
+            average_cost=average_cost+cost.item() #add the cost to the average cost
             
 
             pred = h.data.max(1)[1]   #calculate correct predictions over this batch
-            correct += pred.eq(y.data).sum()
+            correct += pred.eq(y.data).sum().item()
             del x, y, h, cost
         
         
@@ -712,7 +712,7 @@ if __name__ == '__main__':
     network={} #this is the list that contains the network and functions related to the network (optimizer and cost function)
     data={} #this is the list that contains test and training datasets and dataloaders
     
-    state['whitening']='None' #set to 'None' if you dont want whitening, 'ZCA' if you want ZCA.
+    state['whitening']='None' #set to 'None' if you dont want whitening.
     
     #compute data whitening matrix and get the loaders etc
     state['dataname']='CIFAR10'
@@ -780,5 +780,5 @@ if __name__ == '__main__':
 
     ramUsage ()
     train(network,state,isCuda,data) #start training
-    !kill -9 -1
+
     
