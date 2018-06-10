@@ -1,18 +1,21 @@
-# A (Yet Another) PyTorch (0.3.0) Implementation of Residual Networks
+# A (Yet Another) PyTorch (0.4.0) Implementation of Residual Networks
 
 This is a [PyTorch](http://pytorch.org/) implementation of the
 Residual Network architecture with basic blocks as described
 paper [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385)
 by Kaiming He, Xiangyu Zhang, Shaoqing Ren and Jian Sun.
 This implementation gets a CIFAR10 test accuracy of %92-93 percent
-when 18 layers are used (in the paper they also achieve %93 percent with 18 layers) 
-Different annealing schemes or changing the order of the batchnorm and relu does not 
-seem to make any significant improvements but this requires more testing to make sure. 
-SGD with a decreasing learning rate and weight decay=0.0005 seems to perform the
-best among all optimizers. Applying random rotations, flips and crops to the training set
-at the beginning of each cycle to boost the variety in training set seems to improve
-the accuracy by about %1-2 percent. ZCA data whitening and layer-wise properties 
-(setting the weight decays for bias layers to 0) are also implemented.
+when 18 layers with initial depth of 16 are used (in the paper they also achieve %93 
+percent with the same setting). Increasing the width of the depth of the network can
+increase the accuracy up to %94-95 percent (see below). Different annealing schemes 
+or changing the order of the batchnorm and relu does not  seem to make any significant 
+improvements but this requires more testing to make sure. SGD with a decreasing learning 
+rate and weight decay=0.0005 seems to perform the best among all optimizers. Applying 
+random rotations, flips and crops to the training set at the beginning of each cycle 
+to boost the variety in training set seems to improve the accuracy by about %1-2 percent. 
+ZCA data whitening and layer-wise properties  (setting the weight decays for bias layers to 0) 
+are also implemented.ZCA data whitening does not seem to improve the results more than
+normalization of standard deviation.
 
 # Architectural details
 
@@ -24,10 +27,7 @@ shortcut connections as well as usual addition are used as the "identity" mappin
 
 # Implementation details
 
-The code has been implemented for pytorch 0.3. So if you want to run it in 
-pytorch 0.4 you need to change the way some scalars are handled (in particular
-change .sum() to .sum().item() and .data[0] to .item()). 
-
+The code has been implemented for pytorch 0.4. 
 
 # CIFAR-10 Results for various settings 
 
@@ -63,44 +63,72 @@ Best test accuracy: 0.93210, training accuracy: 0.99820 (cost:0.01380)
 | ship   | 0.02200| 0.00400| 0.00600| 0.00300| 0.00000| 0.00200| 0.00100| 0.00100| 0.95500| 0.00600|
 | truck  | 0.00700| 0.02800| 0.00100| 0.00200| 0.00000| 0.00000| 0.00000| 0.00000| 0.01200| 0.95000|
 
-### Implementation of ResNet18 with exponentially decreasing learning rate
+### Implementation of ResNet18 with initial width 32
 
-![](images/Graph2.png)
+![](images/step-nozca-32.png)
+
+Best test accuracy: 0.94030, training accuracy: 0.99970 (cost:0.00475)
+
+Cycle:  280
+Training time for cycle 279 is 127.36  Cost calculation time is 12.73| Class  | Score                                       |
+|--------|---------------------------------------------|
+| plane  | Precision:0.94, Recall: 0.94, F1 norm: 0.94 | 
+| car    | Precision:0.96, Recall: 0.97, F1 norm: 0.97 | 
+| bird   | Precision:0.92, Recall: 0.91, F1 norm: 0.92 | 
+| cat    | Precision:0.87, Recall: 0.87, F1 norm: 0.87 | 
+| deer   | Precision:0.94, Recall: 0.95, F1 norm: 0.94 | 
+| dog    | Precision:0.90, Recall: 0.90, F1 norm: 0.90 | 
+| frog   | Precision:0.96, Recall: 0.96, F1 norm: 0.96 | 
+| horse  | Precision:0.97, Recall: 0.96, F1 norm: 0.96 | 
+| ship   | Precision:0.96, Recall: 0.96, F1 norm: 0.96 | 
+| truck  | Precision:0.96, Recall: 0.96, F1 norm: 0.96 | 
 
 
-Best test accuracy: 0.92490, training accuracy: 0.99632 (cost:0.02136)
+| class  | plane  | car    | bird   | cat    | deer   | dog    | frog   | horse  | ship   | truck  |
+|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+| plane  | 0.94100| 0.00600| 0.01100| 0.01100| 0.00200| 0.00000| 0.00400| 0.00400| 0.01400| 0.00700|
+| car    | 0.00300| 0.97200| 0.00100| 0.00000| 0.00000| 0.00000| 0.00000| 0.00100| 0.00200| 0.02100|
+| bird   | 0.01500| 0.00000| 0.91000| 0.02300| 0.01900| 0.00900| 0.01700| 0.00400| 0.00200| 0.00100|
+| cat    | 0.00300| 0.00400| 0.01600| 0.87200| 0.01500| 0.06700| 0.01000| 0.00400| 0.00400| 0.00500|
+| deer   | 0.00300| 0.00100| 0.01000| 0.01200| 0.95200| 0.00700| 0.00700| 0.00800| 0.00000| 0.00000|
+| dog    | 0.00200| 0.00000| 0.01700| 0.05200| 0.01800| 0.90100| 0.00200| 0.00700| 0.00000| 0.00100|
+| frog   | 0.00300| 0.00000| 0.01100| 0.01500| 0.00300| 0.00400| 0.96100| 0.00200| 0.00000| 0.00100|
+| horse  | 0.00700| 0.00000| 0.00400| 0.00800| 0.00600| 0.01300| 0.00200| 0.95700| 0.00200| 0.00100|
+| ship   | 0.01800| 0.00600| 0.00300| 0.00200| 0.00000| 0.00100| 0.00200| 0.00100| 0.96100| 0.00600|
+| truck  | 0.00500| 0.02100| 0.00100| 0.00200| 0.00000| 0.00000| 0.00000| 0.00000| 0.01100| 0.96000|
 
-|  Class  |  Score                                      |
-| ------- | ------------------------------------------- |
-|  plane  | Precision:0.92, Recall: 0.93, F1 norm: 0.92 |
-|  car    | Precision:0.95, Recall: 0.96, F1 norm: 0.96 |
-|  bird   | Precision:0.92, Recall: 0.90, F1 norm: 0.91 | 
-|  cat    | Precision:0.83, Recall: 0.85, F1 norm: 0.84 |
-|  deer   | Precision:0.93, Recall: 0.94, F1 norm: 0.93 |
-|  dog    | Precision:0.89, Recall: 0.89, F1 norm: 0.89 |
-|  frog   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
-|  horse  | Precision:0.96, Recall: 0.93, F1 norm: 0.95 |
-|  ship   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
-|  truck  | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
+### Implementation of ResNet with lengtf of 32 layers
 
-### Implementation of ResNet with 62 layers with exponentially decreasing learning rate
+Best test accuracy: 0.94730, training accuracy: 0.99952 (cost:0.00385)
 
-![](images/Graph3.png)
+![](images/step-nozca-lresnet.png)
 
-Best test accuracy: 0.91590, training accuracy: 0.99350 (cost:0.01992)
+| Class  | Score                                       |
+|--------|---------------------------------------------|
+| plane  | Precision:0.97, Recall: 0.94, F1 norm: 0.96 | 
+| car    | Precision:0.97, Recall: 0.97, F1 norm: 0.97 | 
+| bird   | Precision:0.93, Recall: 0.93, F1 norm: 0.93 | 
+| cat    | Precision:0.89, Recall: 0.88, F1 norm: 0.89 | 
+| deer   | Precision:0.94, Recall: 0.95, F1 norm: 0.95 | 
+| dog    | Precision:0.90, Recall: 0.92, F1 norm: 0.91 | 
+| frog   | Precision:0.97, Recall: 0.97, F1 norm: 0.97 | 
+| horse  | Precision:0.96, Recall: 0.96, F1 norm: 0.96 | 
+| ship   | Precision:0.96, Recall: 0.97, F1 norm: 0.96 | 
+| truck  | Precision:0.96, Recall: 0.96, F1 norm: 0.96 | 
 
-|  Class  |  Score                                      |
-| ------- | ------------------------------------------- |
-|  plane  | Precision:0.91, Recall: 0.93, F1 norm: 0.92 |
-|  car    | Precision:0.95, Recall: 0.95, F1 norm: 0.95 |
-|  bird   | Precision:0.89, Recall: 0.88, F1 norm: 0.89 | 
-|  cat    | Precision:0.82, Recall: 0.82, F1 norm: 0.82 |
-|  deer   | Precision:0.91, Recall: 0.93, F1 norm: 0.92 |
-|  dog    | Precision:0.86, Recall: 0.86, F1 norm: 0.86 |
-|  frog   | Precision:0.95, Recall: 0.93, F1 norm: 0.94 |
-|  horse  | Precision:0.94, Recall: 0.93, F1 norm: 0.94 |
-|  ship   | Precision:0.96, Recall: 0.94, F1 norm: 0.95 |
-|  truck  | Precision:0.93, Recall: 0.94, F1 norm: 0.94 |
+
+| class  | plane  | car    | bird   | cat    | deer   | dog    | frog   | horse  | ship   | truck  |
+|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+| plane  | 0.94300| 0.00200| 0.01400| 0.00700| 0.00600| 0.00100| 0.00000| 0.00200| 0.01600| 0.00900|
+| car    | 0.00200| 0.97500| 0.00100| 0.00000| 0.00000| 0.00000| 0.00000| 0.00000| 0.00300| 0.01900|
+| bird   | 0.00600| 0.00000| 0.93100| 0.01800| 0.01100| 0.01000| 0.01200| 0.00900| 0.00300| 0.00000|
+| cat    | 0.00300| 0.00000| 0.01800| 0.88200| 0.01600| 0.06000| 0.01000| 0.00500| 0.00400| 0.00200|
+| deer   | 0.00000| 0.00000| 0.01000| 0.01100| 0.95200| 0.01000| 0.00500| 0.01000| 0.00100| 0.00100|
+| dog    | 0.00000| 0.00100| 0.01000| 0.04700| 0.01400| 0.91500| 0.00400| 0.00800| 0.00000| 0.00100|
+| frog   | 0.00200| 0.00100| 0.01100| 0.00900| 0.00200| 0.00700| 0.96700| 0.00000| 0.00000| 0.00100|
+| horse  | 0.00200| 0.00000| 0.00400| 0.00800| 0.01200| 0.01400| 0.00000| 0.95800| 0.00100| 0.00100|
+| ship   | 0.01300| 0.00300| 0.00300| 0.00400| 0.00100| 0.00000| 0.00000| 0.00100| 0.96700| 0.00800|
+| truck  | 0.00300| 0.02200| 0.00100| 0.00300| 0.00000| 0.00000| 0.00000| 0.00000| 0.01000| 0.96100|
 
 
 ### Discussion
