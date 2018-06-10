@@ -147,7 +147,7 @@ a cat is most likely to be confused with a dog (5 times more compared to other o
 
 # Requirements
 
-Pytorch 0.3 and internet connection to download the datasets.
+Pytorch 0.4 and internet connection to download the datasets. The code was tested on google colab but should be mostly fine on a personal linux computer with pytorch 0.4.
 
 # Author
 Sina Tureli
