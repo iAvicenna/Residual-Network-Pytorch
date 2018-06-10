@@ -70,7 +70,9 @@ Best test accuracy: 0.93210, training accuracy: 0.99820 (cost:0.01380)
 Best test accuracy: 0.94030, training accuracy: 0.99970 (cost:0.00475)
 
 Cycle:  280
-Training time for cycle 279 is 127.36  Cost calculation time is 12.73| Class  | Score                                       |
+Training time for cycle 279 is 127.36  Cost calculation time is 12.73
+
+| Class  | Score                                       |
 |--------|---------------------------------------------|
 | plane  | Precision:0.94, Recall: 0.94, F1 norm: 0.94 | 
 | car    | Precision:0.96, Recall: 0.97, F1 norm: 0.97 | 
