@@ -31,7 +31,7 @@ The code has been implemented for pytorch 0.4.
 
 # CIFAR-10 Results for various settings 
 
-### Implementation of Usual ResNet18 
+### Implementation of Usual ResNet18 (initial width of 16 nodes and length of 18 layers)
 Best test accuracy: 0.93210, training accuracy: 0.99820 (cost:0.01380)
 
 ![](images/step-nozca.png)
@@ -63,7 +63,7 @@ Best test accuracy: 0.93210, training accuracy: 0.99820 (cost:0.01380)
 | ship   | 0.02200| 0.00400| 0.00600| 0.00300| 0.00000| 0.00200| 0.00100| 0.00100| 0.95500| 0.00600|
 | truck  | 0.00700| 0.02800| 0.00100| 0.00200| 0.00000| 0.00000| 0.00000| 0.00000| 0.01200| 0.95000|
 
-### Implementation of ResNet18 with initial width 32
+### Implementation of ResNet18 with initial width of 32 nodes
 
 Best test accuracy: 0.94030, training accuracy: 0.99970 (cost:0.00475)
 
@@ -97,7 +97,7 @@ Best test accuracy: 0.94030, training accuracy: 0.99970 (cost:0.00475)
 | ship   | 0.01800| 0.00600| 0.00300| 0.00200| 0.00000| 0.00100| 0.00200| 0.00100| 0.96100| 0.00600|
 | truck  | 0.00500| 0.02100| 0.00100| 0.00200| 0.00000| 0.00000| 0.00000| 0.00000| 0.01100| 0.96000|
 
-### Implementation of ResNet with lengtf of 32 layers
+### Implementation of ResNet with length of 32 layers
 
 Best test accuracy: 0.94730, training accuracy: 0.99952 (cost:0.00385)
 
