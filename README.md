@@ -1,4 +1,4 @@
-# A (Yet Another) PyTorch (0.4.0) Implementation of Residual Networks
+u# A (Yet Another) PyTorch (0.4.0) Implementation of Residual Networks
 
 This is a [PyTorch](http://pytorch.org/) implementation of the
 Residual Network architecture with basic blocks as described
@@ -31,7 +31,7 @@ The code has been implemented for pytorch 0.4.
 
 # CIFAR-10 Results for various settings 
 
-### Implementation of Usual ResNet18 (initial width of 16 nodes and length of 18 layers)
+### Implementation of usual ResNet18 (initial width of 16 nodes and length of 18 layers)
 Best test accuracy: 0.93210, training accuracy: 0.99820 (cost:0.01380)
 
 ![](images/step-nozca.png)
