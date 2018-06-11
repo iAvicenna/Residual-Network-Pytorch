@@ -166,6 +166,12 @@ Best test accuracy: 0.92630, training accuracy: 0.98942 (cost:0.04020)
 | ship   | 0.02800| 0.00600| 0.00400| 0.00400| 0.00000| 0.00000| 0.00000| 0.00000| 0.95100| 0.00700|
 | truck  | 0.00900| 0.03200| 0.00300| 0.00100| 0.00100| 0.00000| 0.00000| 0.00200| 0.00700| 0.94500|
 
+### Implementation of ResNet with 32 layers and without the identity mappings
+
+Best test accuracy: 0.92870,  training accuracy: 0.99498 (cost:0.01779)
+
+![](images/ConvNet32.png)
+
 
 ### Discussion
 Note that a high precision, low recall for an object X means that the network is very cautious 
