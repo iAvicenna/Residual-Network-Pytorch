@@ -17,6 +17,9 @@ ZCA data whitening and layer-wise properties  (setting the weight decays for bia
 are also implemented.ZCA data whitening does not seem to improve the results more than
 normalization of standard deviation.
 
+We also test the importance of identity mappings in residual networks by calculatin efficiency over the same networks
+that do not contain the identity and downsampling shortcuts. Even without the identity mapping ResNet18 achieves almost the same accuracy of %92.5. Therefore the success of this type of networks seems (atleast for the shallower networks) to hinge more on the correct choice of ordering for the layers rather than the introduction of the novel identity and shortcut maps. Ofcourse better accuracy is not the only claim of residual networks. Their biggest claim actually is that the results do not degenerate as the network size grows. Tests to verify these claims are also underway. 
+
 # Architectural details
 
 The network contains an initial convolution + 3 stages of residual blocks. 
@@ -130,6 +133,39 @@ Best test accuracy: 0.94730, training accuracy: 0.99952 (cost:0.00385)
 | ship   | 0.01300| 0.00300| 0.00300| 0.00400| 0.00100| 0.00000| 0.00000| 0.00100| 0.96700| 0.00800|
 | truck  | 0.00300| 0.02200| 0.00100| 0.00300| 0.00000| 0.00000| 0.00000| 0.00000| 0.01000| 0.96100|
 
+### Implementation of ResNet18 without the identity mappings
+
+Best test accuracy: 0.92630, training accuracy: 0.98942 (cost:0.04020)
+
+![](images/ConvNet18.png)
+
+| Class  | Score                                       |
+|--------|---------------------------------------------|
+| plane  | Precision:0.92, Recall: 0.92, F1 norm: 0.92 | 
+| car    | Precision:0.95, Recall: 0.97, F1 norm: 0.96 | 
+| bird   | Precision:0.90, Recall: 0.91, F1 norm: 0.90 | 
+| cat    | Precision:0.85, Recall: 0.85, F1 norm: 0.85 | 
+| deer   | Precision:0.94, Recall: 0.92, F1 norm: 0.93 | 
+| dog    | Precision:0.88, Recall: 0.90, F1 norm: 0.89 | 
+| frog   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 | 
+| horse  | Precision:0.96, Recall: 0.93, F1 norm: 0.95 | 
+| ship   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 | 
+| truck  | Precision:0.96, Recall: 0.94, F1 norm: 0.95 | 
+
+
+| class  | plane  | car    | bird   | cat    | deer   | dog    | frog   | horse  | ship   | truck  |
+|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+| plane  | 0.92400| 0.00600| 0.02200| 0.01000| 0.00200| 0.00000| 0.00400| 0.00100| 0.02200| 0.00900|
+| car    | 0.00600| 0.96600| 0.00100| 0.00000| 0.00000| 0.00100| 0.00100| 0.00100| 0.00600| 0.01800|
+| bird   | 0.01500| 0.00000| 0.90900| 0.01900| 0.01400| 0.01300| 0.01900| 0.00600| 0.00400| 0.00100|
+| cat    | 0.00900| 0.00100| 0.02200| 0.85400| 0.01600| 0.06600| 0.01700| 0.01000| 0.00300| 0.00200|
+| deer   | 0.00300| 0.00100| 0.01800| 0.02100| 0.92300| 0.01400| 0.00700| 0.01100| 0.00100| 0.00100|
+| dog    | 0.00400| 0.00000| 0.01300| 0.06400| 0.01100| 0.89500| 0.00400| 0.00700| 0.00100| 0.00100|
+| frog   | 0.00300| 0.00000| 0.01600| 0.01900| 0.00600| 0.00300| 0.95000| 0.00200| 0.00000| 0.00100|
+| horse  | 0.00700| 0.00000| 0.00600| 0.00900| 0.01400| 0.02400| 0.00100| 0.93200| 0.00300| 0.00400|
+| ship   | 0.02800| 0.00600| 0.00400| 0.00400| 0.00000| 0.00000| 0.00000| 0.00000| 0.95100| 0.00700|
+| truck  | 0.00900| 0.03200| 0.00300| 0.00100| 0.00100| 0.00000| 0.00000| 0.00200| 0.00700| 0.94500|
+
 
 ### Discussion
 Note that a high precision, low recall for an object X means that the network is very cautious 
@@ -144,6 +180,10 @@ which are not X as X as well. So it is not very precise but recalls all the X.
 In this case we see that cats and dogs have both lower recall and precision compared to others.
 This likely means that the program confuses cats and dogs with each other. The confusion matrix for the first case confirms this
 a cat is most likely to be confused with a dog (5 times more compared to other objects) followed by deers and birds and the same is true for the dog as well.
+
+As for the comparison between residual networks that contain and do not contain the identity mappings, it is safe to say that for the shorter network the difference of accuracies is negligble. 
+
+
 
 # Requirements
 
