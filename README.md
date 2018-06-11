@@ -18,7 +18,7 @@ are also implemented.ZCA data whitening does not seem to improve the results mor
 normalization of standard deviation.
 
 We also test the importance of identity mappings in residual networks by calculatin efficiency over the same networks
-that do not contain the identity and downsampling shortcuts. Even without the identity mapping ResNet18 achieves almost the same accuracy of %92.5. Therefore the success of this type of networks seems (atleast for the shallower networks) to hinge more on the correct choice of ordering for the layers rather than the introduction of the novel identity and shortcut maps. Ofcourse better accuracy is not the only claim of residual networks. Their biggest claim actually is that the results do not degenerate as the network size grows. Tests to verify these claims are also underway. 
+that do not contain the identity and downsampling shortcuts. Even without the identity mapping ResNet18 achieves almost the same accuracy of %92.5. Therefore the success of this type of networks seems (atleast for the shallower networks) to hinge more on the correct choice of ordering for the layers rather than the introduction of the novel identity and shortcut maps. Ofcourse better accuracy is not the only claim of residual networks. Their important claim however is that the results do not degenerate as the network size grows. Our experiements indicate that this claim has plausability. With the usual ResNet architecture, one can increase accuracy from 92 to 95 percent by increasing the network size where as if the identity connections are removed the accuracy does not seem to improve.
 
 # Architectural details
 
@@ -172,6 +172,34 @@ Best test accuracy: 0.92870,  training accuracy: 0.99498 (cost:0.01779)
 
 ![](images/ConvNet32.png)
 
+| Class  | Score                                       |
+|--------|---------------------------------------------|
+| plane  | Precision:0.93, Recall: 0.94, F1 norm: 0.94 | 
+| car    | Precision:0.97, Recall: 0.96, F1 norm: 0.96 | 
+| bird   | Precision:0.90, Recall: 0.91, F1 norm: 0.90 | 
+| cat    | Precision:0.84, Recall: 0.84, F1 norm: 0.84 | 
+| deer   | Precision:0.93, Recall: 0.93, F1 norm: 0.93 | 
+| dog    | Precision:0.87, Recall: 0.89, F1 norm: 0.87 | 
+| frog   | Precision:0.96, Recall: 0.93, F1 norm: 0.94 | 
+| horse  | Precision:0.97, Recall: 0.94, F1 norm: 0.95 | 
+| ship   | Precision:0.95, Recall: 0.95, F1 norm: 0.95 | 
+| truck  | Precision:0.94, Recall: 0.96, F1 norm: 0.95 | 
+
+
+| class  | plane  | car    | bird   | cat    | deer   | dog    | frog   | horse  | ship   | truck  |
+|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+| plane  | 0.94000| 0.00100| 0.01600| 0.00400| 0.00600| 0.00100| 0.00100| 0.00100| 0.02200| 0.00800|
+| car    | 0.00400| 0.95800| 0.00000| 0.00100| 0.00000| 0.00000| 0.00000| 0.00000| 0.00500| 0.03200|
+| bird   | 0.02200| 0.00000| 0.90700| 0.02400| 0.01000| 0.01900| 0.01000| 0.00200| 0.00400| 0.00200|
+| cat    | 0.00700| 0.00200| 0.02500| 0.84500| 0.01700| 0.07300| 0.01700| 0.00600| 0.00300| 0.00500|
+| deer   | 0.00200| 0.00000| 0.02100| 0.01800| 0.92500| 0.01400| 0.00600| 0.01300| 0.00100| 0.00000|
+| dog    | 0.00100| 0.00100| 0.01200| 0.07400| 0.01200| 0.88500| 0.00300| 0.00900| 0.00000| 0.00300|
+| frog   | 0.00500| 0.00300| 0.02100| 0.02500| 0.00500| 0.00800| 0.93000| 0.00200| 0.00100| 0.00000|
+| horse  | 0.00400| 0.00000| 0.00400| 0.01000| 0.01800| 0.02300| 0.00100| 0.93800| 0.00000| 0.00200|
+| ship   | 0.02100| 0.00700| 0.00500| 0.00500| 0.00200| 0.00000| 0.00100| 0.00000| 0.95100| 0.00800|
+| truck  | 0.00300| 0.01400| 0.00200| 0.00200| 0.00000| 0.00000| 0.00200| 0.00100| 0.01300| 0.96300|
+
+
 
 ### Discussion
 Note that a high precision, low recall for an object X means that the network is very cautious 
@@ -187,7 +215,7 @@ In this case we see that cats and dogs have both lower recall and precision comp
 This likely means that the program confuses cats and dogs with each other. The confusion matrix for the first case confirms this
 a cat is most likely to be confused with a dog (5 times more compared to other objects) followed by deers and birds and the same is true for the dog as well.
 
-As for the comparison between residual networks that contain and do not contain the identity mappings, it is safe to say that for the shorter network the difference of accuracies is negligble. 
+As for the comparison between residual networks that contain and do not contain the identity mappings, it is safe to say that for the shorter network the difference of accuracies is negligble. However unlike in the usual case with identity, increasing the number of layers does not result in a better accuracy. Indeed in the usual ResNet32 one achieves an accuracy of almost %95 percent where in ResNet32 without identity mappings the accuracy is stuck at %92 value which is the same as with ResNet18 without identity mappings. Therefore the claim that Residual architecture helps with more complex neural networks has plausibility.
 
 
 
