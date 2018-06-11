@@ -1,4 +1,4 @@
-u# A (Yet Another) PyTorch (0.4.0) Implementation of Residual Networks
+# A (Yet Another) PyTorch (0.4.0) Implementation of Residual Networks
 
 This is a [PyTorch](http://pytorch.org/) implementation of the
 Residual Network architecture with basic blocks as described
