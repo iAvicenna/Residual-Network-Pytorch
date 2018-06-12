@@ -18,7 +18,7 @@ are also implemented.ZCA data whitening does not seem to improve the results mor
 normalization of standard deviation.
 
 We also test the importance of identity mappings in residual networks by calculatin efficiency over the same networks
-that do not contain the identity and downsampling shortcuts. Even without the identity mapping ResNet18 achieves almost the same accuracy of %92.5. Therefore the success of this type of networks seems (atleast for the shallower networks) to hinge more on the correct choice of ordering for the layers rather than the introduction of the identity and shortcut maps. Ofcourse better accuracy is not the only claim of residual networks. Their more important claim is that the accuracy does not degenerate as the network size grows. Our experiements indicate that this claim has plausability. With the usual ResNet architecture, one can increase accuracy from 92 to 95 percent by increasing the network size where as if the identity connections are removed the accuracy does not seem to improve as depth increases.
+that do not contain the identity and downsampling shortcuts. Even without the identity mapping ResNet18 achieves almost the same accuracy of %92.5. Therefore the success of this type of networks seems (atleast for the shallower networks) to hinge more on the correct choice of ordering for the layers rather than the introduction of the identity and shortcut maps. Ofcourse better accuracy is not the only claim of residual networks. Their more important claim is that the accuracy does not degenerate as the network size grows. Our experiements indicate that this claim has plausability. With the usual ResNet architecture, one can increase accuracy from 92 to 95 percent by increasing the network size where as if the identity connections are removed the accuracy does not seem to improve as depth increases. On the other hand accuracy increases when the width is increased even when the identity mappings are removed. Therefore identity connections are more essential for increasing the depth rather than the width.
 
 # Architectural details
 
@@ -199,7 +199,38 @@ Best test accuracy: 0.92870,  training accuracy: 0.99498 (cost:0.01779)
 | ship   | 0.02100| 0.00700| 0.00500| 0.00500| 0.00200| 0.00000| 0.00100| 0.00000| 0.95100| 0.00800|
 | truck  | 0.00300| 0.01400| 0.00200| 0.00200| 0.00000| 0.00000| 0.00200| 0.00100| 0.01300| 0.96300|
 
+### Implementation of ResNet18 with initial width 32 and without the identity mappings
 
+Best test accuracy: 0.93340, training accuracy: 0.99796 (cost:0.01320)
+
+![](images/WConvNet.png)
+
+| Class  | Score                                       |
+|--------|---------------------------------------------|
+| plane  | Precision:0.95, Recall: 0.93, F1 norm: 0.94 | 
+| car    | Precision:0.96, Recall: 0.96, F1 norm: 0.96 | 
+| bird   | Precision:0.90, Recall: 0.91, F1 norm: 0.90 | 
+| cat    | Precision:0.86, Recall: 0.86, F1 norm: 0.86 | 
+| deer   | Precision:0.93, Recall: 0.94, F1 norm: 0.94 | 
+| dog    | Precision:0.91, Recall: 0.88, F1 norm: 0.89 | 
+| frog   | Precision:0.94, Recall: 0.96, F1 norm: 0.95 | 
+| horse  | Precision:0.97, Recall: 0.96, F1 norm: 0.96 | 
+| ship   | Precision:0.96, Recall: 0.95, F1 norm: 0.96 | 
+| truck  | Precision:0.95, Recall: 0.96, F1 norm: 0.96 | 
+
+
+| class  | plane  | car    | bird   | cat    | deer   | dog    | frog   | horse  | ship   | truck  |
+|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
+| plane  | 0.93300| 0.00500| 0.01600| 0.00500| 0.00500| 0.00000| 0.00600| 0.00100| 0.02300| 0.00600|
+| car    | 0.00300| 0.96100| 0.00000| 0.00100| 0.00000| 0.00000| 0.00100| 0.00100| 0.00300| 0.03000|
+| bird   | 0.00700| 0.00000| 0.91000| 0.02100| 0.02000| 0.01500| 0.01800| 0.00500| 0.00300| 0.00100|
+| cat    | 0.00800| 0.00300| 0.02300| 0.86400| 0.01400| 0.05400| 0.02200| 0.00800| 0.00200| 0.00200|
+| deer   | 0.00300| 0.00000| 0.01600| 0.01500| 0.93800| 0.01000| 0.00900| 0.00900| 0.00000| 0.00000|
+| dog    | 0.00100| 0.00000| 0.01600| 0.07500| 0.01200| 0.88300| 0.00500| 0.00800| 0.00000| 0.00000|
+| frog   | 0.00200| 0.00100| 0.01600| 0.01300| 0.00400| 0.00000| 0.96200| 0.00200| 0.00000| 0.00000|
+| horse  | 0.00300| 0.00000| 0.00700| 0.00900| 0.01100| 0.01000| 0.00000| 0.96000| 0.00000| 0.00000|
+| ship   | 0.02000| 0.00600| 0.00700| 0.00400| 0.00000| 0.00200| 0.00100| 0.00000| 0.95200| 0.00800|
+| truck  | 0.00400| 0.02300| 0.00200| 0.00200| 0.00100| 0.00000| 0.00100| 0.00000| 0.00700| 0.96000|
 
 ### Discussion
 Note that a high precision, low recall for an object X means that the network is very cautious 
@@ -215,7 +246,7 @@ In this case we see that cats and dogs have both lower recall and precision comp
 This likely means that the program confuses cats and dogs with each other. The confusion matrix for the first case confirms this
 a cat is most likely to be confused with a dog (5 times more compared to other objects) followed by deers and birds and the same is true for the dog as well.
 
-As for the comparison between residual networks that contain and do not contain the identity mappings, it is safe to say that for the shorter network the difference of accuracies is negligble. However unlike in the usual case with identity, increasing the number of layers does not result in a better accuracy. Indeed in the usual ResNet32 one achieves an accuracy of almost %95 percent where in ResNet32 without identity mappings the accuracy is stuck at %92 value which is the same as with ResNet18 without identity mappings. Therefore the claim that Residual architecture helps with more complex neural networks has plausibility.
+As for the comparison between residual networks that contain and do not contain the identity mappings, it is safe to say that for the shorter network the difference of accuracies is negligble. However unlike in the usual case with identity, increasing the number of layers does not result in a better accuracy. Indeed in the usual ResNet32 one achieves an accuracy of almost %95 percent where in ResNet32 without identity mappings the accuracy is stuck at %92 value which is the same as with ResNet18 without identity mappings. Therefore the claim that Residual architecture helps with more complex neural networks has plausibility. We also tried a wide residual network (initial width of 32 nodes) without identity mappings. We see an improvement of the accuracy up to %93.5 percent from %92 percent. Therefore the identity mappings seem to be more essential for increasing the depth rather than the width.
 
 
 
