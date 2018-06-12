@@ -14,10 +14,10 @@ rate and weight decay=0.0005 seems to perform the best among all optimizers. App
 random rotations, flips and crops to the training set at the beginning of each cycle 
 to boost the variety in training set seems to improve the accuracy by about %1-2 percent. 
 ZCA data whitening and layer-wise properties  (setting the weight decays for bias layers to 0) 
-are also implemented.ZCA data whitening does not seem to improve the results more than
+are also implemented. ZCA data whitening does not seem to improve the results more than
 normalization of standard deviation.
 
-We also test the importance of identity mappings in residual networks by calculatin efficiency over the same networks
+We also test the importance of identity mappings in residual networks by calculating the efficiency over the same networks
 that do not contain the identity and downsampling shortcuts. Even without the identity mapping ResNet18 achieves almost the same accuracy of %92.5. Therefore the success of this type of networks seems (atleast for the shallower networks) to hinge more on the correct choice of ordering for the layers rather than the introduction of the identity and shortcut maps. Ofcourse better accuracy is not the only claim of residual networks. Their more important claim is that the accuracy does not degenerate as the network size grows. Our experiements indicate that this claim has plausability. With the usual ResNet architecture, one can increase accuracy from 92 to 95 percent by increasing the network size where as if the identity connections are removed the accuracy does not seem to improve as depth increases. On the other hand accuracy increases when the width is increased even when the identity mappings are removed. Therefore identity connections are more essential for increasing the depth rather than the width.
 
 # Architectural details
